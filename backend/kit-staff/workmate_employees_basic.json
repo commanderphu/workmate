@@ -1,0 +1,152 @@
+[
+  {
+    "employee_id": "KIT-0001",
+    "first_name": "Joshua",
+    "last_name": "Kuhrau",
+    "email": "joshua@kit-it-koblenz.de",
+    "department": "Management",
+    "role_title": "CEO / Gründer / Visionär",
+    "system_role": "admin",
+    "manager_id": ""
+  },
+  {
+    "employee_id": "KIT-0002",
+    "first_name": "Jessica",
+    "last_name": "Schemel",
+    "email": "jessica@kit-it-koblenz.de",
+    "department": "Backoffice",
+    "role_title": "Backoffice / Organisation",
+    "system_role": "manager",
+    "manager_id": "KIT-0001"
+  },
+  {
+    "employee_id": "KIT-0003",
+    "first_name": "Oliver",
+    "last_name": "Schäfer",
+    "email": "oliver@kit-it-koblenz.de",
+    "department": "Management",
+    "role_title": "CTO / Marketing & Social Media",
+    "system_role": "manager",
+    "manager_id": "KIT-0001"
+  },
+  {
+    "employee_id": "KIT-0004",
+    "first_name": "Celine",
+    "last_name": "Göken",
+    "email": "celine@kit-it-koblenz.de",
+    "department": "Facility",
+    "role_title": "Facility Managerin",
+    "system_role": "manager",
+    "manager_id": "KIT-0002"
+  },
+  {
+    "employee_id": "KIT-0005",
+    "first_name": "Etienne",
+    "last_name": "Göken",
+    "email": "etienne@kit-it-koblenz.de",
+    "department": "Facility",
+    "role_title": "Technik / Hausmeister",
+    "system_role": "staff",
+    "manager_id": "KIT-0004"
+  },
+  {
+    "employee_id": "KIT-0006",
+    "first_name": "Chris",
+    "last_name": "Hofmann",
+    "email": "chris@kit-it-koblenz.de",
+    "department": "Support",
+    "role_title": "IT-Support",
+    "system_role": "staff",
+    "manager_id": "KIT-0003"
+  },
+  {
+    "employee_id": "KIT-0007",
+    "first_name": "Sabrina",
+    "last_name": "Hofmann",
+    "email": "sabrina@kit-it-koblenz.de",
+    "department": "Backoffice",
+    "role_title": "Backoffice & Social Media",
+    "system_role": "manager",
+    "manager_id": "KIT-0002"
+  },
+  {
+    "employee_id": "KIT-0008",
+    "first_name": "Dustin",
+    "last_name": "Velten",
+    "email": "dustin@kit-it-koblenz.de",
+    "department": "Sales",
+    "role_title": "Vertrieb",
+    "system_role": "staff",
+    "manager_id": "KIT-0001"
+  },
+  {
+    "employee_id": "KIT-0009",
+    "first_name": "Tobias",
+    "last_name": "Krüger",
+    "email": "tobias@kit-it-koblenz.de",
+    "department": "Finance",
+    "role_title": "Finanzen",
+    "system_role": "manager",
+    "manager_id": "KIT-0001"
+  },
+  {
+    "employee_id": "KIT-0010",
+    "first_name": "Klara",
+    "last_name": "Weber",
+    "email": "klara@kit-it-koblenz.de",
+    "department": "Consulting",
+    "role_title": "Consultant",
+    "system_role": "staff",
+    "manager_id": "KIT-0001"
+  },
+  {
+    "employee_id": "KIT-0011",
+    "first_name": "Mara",
+    "last_name": "Lehmann",
+    "email": "mara@kit-it-koblenz.de",
+    "department": "Creative",
+    "role_title": "UX/UI Designerin",
+    "system_role": "staff",
+    "manager_id": "KIT-0002"
+  },
+  {
+    "employee_id": "KIT-0012",
+    "first_name": "Ben",
+    "last_name": "Falkner",
+    "email": "ben@kit-it-koblenz.de",
+    "department": "Security",
+    "role_title": "Sicherheitsbeauftragter",
+    "system_role": "manager",
+    "manager_id": "KIT-0001"
+  },
+  {
+    "employee_id": "KIT-0013",
+    "first_name": "Sara",
+    "last_name": "Brandt",
+    "email": "sara@kit-it-koblenz.de",
+    "department": "Support",
+    "role_title": "Support Juniorin",
+    "system_role": "staff",
+    "manager_id": "KIT-0003"
+  },
+  {
+    "employee_id": "KIT-0014",
+    "first_name": "Lea",
+    "last_name": "Sommer",
+    "email": "lea@kit-it-koblenz.de",
+    "department": "Marketing",
+    "role_title": "Marketing-Assistentin / Azubi",
+    "system_role": "staff",
+    "manager_id": "KIT-0007"
+  },
+  {
+    "employee_id": "KIT-0015",
+    "first_name": "Lena",
+    "last_name": "Fischer",
+    "email": "lena@kit-it-koblenz.de",
+    "department": "Backoffice",
+    "role_title": "Azubi Backoffice",
+    "system_role": "viewer",
+    "manager_id": "KIT-0002"
+  }
+]

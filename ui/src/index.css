@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ----------------------------
+   Layout-Variablen & Container
+----------------------------- */
+:root {
+  /* maximale Breite des Inhaltsbereichs */
+  --page-max: 1380px;
+
+  /* Seitenabstände:
+     - mindestens 16px
+     - wachsen mit der Bildschirmbreite (4vw)
+     - maximal 56px
+  */
+  --page-pad: clamp(16px, 4vw, 56px);
+}
+
+body {
+  @apply bg-brand-bg text-brand-fg antialiased;
+}
+
+.container-page {
+  max-width: var(--page-max);   /* Inhalt läuft nie breiter als 1380px */
+  margin-left: auto;            /* zentriert horizontal */
+  margin-right: auto;
+  padding-left: var(--page-pad); /* Abstand links */
+  padding-right: var(--page-pad);/* Abstand rechts */
+  padding-top: 1.25rem;          /* py-5 = 20px oben */
+  padding-bottom: 1.25rem;       /* py-5 = 20px unten */
+}
+
+/* ----------------------------
+   Typografie
+----------------------------- */
+h1 { @apply text-xl md:text-2xl font-semibold tracking-tight; }
+h2 { @apply text-lg md:text-xl font-semibold tracking-tight; }
+
+.p     { @apply text-sm leading-relaxed; }
+.muted { @apply text-sm text-brand-muted; }
+
+/* Gleichmäßiger Abstand zwischen Sections */
+section { @apply mt-8; }
+
+/* ----------------------------
+   Komponenten / Utilities
+----------------------------- */
+@layer components {
+  .card       { @apply bg-[#2e2e2e] rounded-2xl shadow-soft p-4 md:p-5 border border-white/5; }
+  .card-title { @apply text-base md:text-lg font-semibold tracking-tight; }
+  .kpi        { @apply text-3xl md:text-4xl font-extrabold tracking-tight text-white; }
+  .badge      { @apply inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium bg-white/10 text-white; }
+  .btn        { @apply inline-flex items-center justify-center rounded-xl px-6 py-2 bg-brand-accent text-black font-medium hover:opacity-90 transition; }
+  .link       { @apply text-brand-accent hover:underline; }
+}
+
+/* ----------------------------
+   Departments (Mini-Cards)
+----------------------------- */
+.dept-card {
+  @apply bg-[#2e2e2e] rounded-xl shadow-soft border border-white/5
+         px-4 py-2 flex items-center justify-between gap-2
+         hover:border-brand-accent/40 hover:shadow-[0_0_12px_rgba(255,145,0,0.2)]
+         transition;
+  min-width: 8rem;
+}
+
+.dept-name  { @apply text-sm font-medium; }
+
+.dept-badge {
+  @apply inline-flex items-center justify-center rounded-full px-2 py-0.5
+         text-xs font-semibold bg-white/10 text-white;
+}

@@ -1,14 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import Dashboard from '../pages/Dashboard.vue'
 
-const routes = [
-  { path: '/', component: Dashboard },
-]
+const Overview = () => import('../views/Overview.vue')
+const Employee = () => import('../views/Employee.vue')
 
-const router = createRouter({
+export default createRouter({
   history: createWebHistory(),
-  routes,
+  routes: [
+    { path: '/', name: 'overview', component: Overview },
+    { path: '/employee/:employeeId', name: 'employee', component: Employee, props: true },
+  ],
 })
-
-export default router
-
