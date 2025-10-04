@@ -51,8 +51,12 @@ section { @apply mt-8; }
   .card-title { @apply text-base md:text-lg font-semibold tracking-tight; }
   .kpi        { @apply text-3xl md:text-4xl font-extrabold tracking-tight text-white; }
   .badge      { @apply inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium bg-white/10 text-white; }
-  .btn        { @apply inline-flex items-center justify-center rounded-xl px-6 py-2 bg-brand-accent text-black font-medium hover:opacity-90 transition; }
+  .btn        { @apply inline-flex items-center justify-center rounded-xl px-6 py-2 bg-brand-accent text-black font-medium shadow-[0_10px_25px_rgba(255,145,0,0.35)] hover:opacity-95 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent/60; }
+  .btn-secondary { @apply inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-5 py-2 text-sm font-medium text-white transition hover:border-brand-accent/40 hover:text-brand-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent/40; }
   .link       { @apply text-brand-accent hover:underline; }
+  .input      { @apply w-40 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-brand-muted focus:border-brand-accent/60 focus:bg-black/20 focus:outline-none focus:ring-2 focus:ring-brand-accent/50 transition; }
+  .nav-link   { @apply inline-flex items-center gap-2 rounded-xl px-3 py-2 font-medium text-brand-muted hover:text-white hover:bg-white/5 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent/40; }
+  .nav-link--active { @apply bg-white/10 text-white shadow-[0_10px_25px_rgba(255,145,0,0.25)]; }
 }
 
 /* ----------------------------

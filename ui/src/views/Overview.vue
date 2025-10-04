@@ -15,6 +15,7 @@ import AbsenceCalendar from '@/components/AbsenceCalendar.vue'
 const data = ref<DashboardOverview | null>(null)
 const err = ref<string | null>(null)
 const empSearch = ref('')
+const quickLinks = ['KIT-0001', 'KIT-0002', 'KIT-0003']
 
 // Router
 const route = useRoute()
@@ -27,6 +28,11 @@ const isEmployeeRoute = computed(() => route.name === 'employee')
 const hasDeptData = computed(() =>
   !!data.value && !!data.value.employees && Object.keys(data.value.employees.by_department || {}).length > 0
 )
+
+const departmentCount = computed(() => {
+  if (!data.value?.employees?.by_department) return 0
+  return Object.keys(data.value.employees.by_department).length
+})
 
 // Load
 onMounted(async () => {
@@ -41,7 +47,7 @@ onMounted(async () => {
 function openEmployee() {
   const id = empSearch.value.trim()
   if (!id) return
-  router.push({ name: 'employee', params: { id } })   // <- HIER: id statt employeeId
+  router.push({ name: 'employee', params: { employeeId: id } })
 }
 
 </script>
@@ -85,7 +91,13 @@ function openEmployee() {
         </div>
 
         <!-- Departments -->
-        <Section v-if="hasDeptData" title="Departments" class="mt-6">
+        <Section
+          v-if="hasDeptData"
+          title="Departments"
+          class="mt-6"
+          :right="departmentCount ? departmentCount + ' Bereiche' : undefined"
+          description="Wie sich dein Team verteilt: Departments mit aktiven Mitarbeiter:innen."
+        >
           <div class="flex flex-wrap gap-3 md:col-span-2 lg:col-span-3">
             <div
               v-for="(cnt, dept) in data.employees.by_department"
@@ -99,26 +111,40 @@ function openEmployee() {
           </div>
         </Section>
 
-        <div v-else class="card mt-6 text-sm text-brand-muted">
+        <div v-else class="card mt-6 border border-dashed border-white/10 text-sm text-brand-muted">
           Noch keine Department-Daten. Hinterlege <code>department</code> bei den Mitarbeitern.
         </div>
 
         <!-- Schnellzugriff -->
-        <Section title="Schnellzugriff" class="mt-6">
-          <div class="flex flex-wrap items-center gap-3 md:col-span-2 lg:col-span-3">
-            <!-- feste Beispiele -->
-            <RouterLink class="btn" :to="{ name: 'employee', params: { employeeId: 'KIT-0001' } }">KIT-0001</RouterLink>
-            <RouterLink class="btn" :to="{ name: 'employee', params: { employeeId: 'KIT-0002' } }">KIT-0002</RouterLink>
-            <RouterLink class="btn" :to="{ name: 'employee', params: { employeeId: 'KIT-0003' } }">KIT-0003</RouterLink>
-
-
-
-            <!-- Eingabe -->
-              <form class="flex items-center gap-2" @submit.prevent="$router.push({ name: 'employee', params: { employeeId: empSearch } })">
-                <input v-model="empSearch" class="rounded-xl bg-gray-800 text-white placeholder-gray-400 border border-gray-700 px-3 py-2" placeholder="KIT-0001" />
-                <button class="px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-black" type="submit">Öffnen</button>
-              </form>
-
+        <Section
+          title="Schnellzugriff"
+          class="mt-6"
+          columns="single"
+          description="Direkt zur Personalakte springen – wähle eine Beispiel-ID oder gib deine eigene ein."
+        >
+          <div class="card flex flex-wrap items-center gap-3 md:gap-4 md:col-span-2 lg:col-span-3">
+            <div class="flex flex-wrap items-center gap-2">
+              <RouterLink
+                v-for="id in quickLinks"
+                :key="id"
+                class="btn-secondary"
+                :to="{ name: 'employee', params: { employeeId: id } }"
+              >
+                {{ id }}
+              </RouterLink>
+            </div>
+            <div class="h-5 w-px bg-white/10 hidden md:block" aria-hidden="true"></div>
+            <form class="flex flex-wrap items-center gap-2" @submit.prevent="openEmployee">
+              <label class="muted text-xs uppercase tracking-[0.2em]" for="emp-id-input">Eigene ID</label>
+              <input
+                id="emp-id-input"
+                v-model="empSearch"
+                class="input"
+                placeholder="z. B. KIT-0007"
+                autocomplete="off"
+              />
+              <button class="btn" type="submit">Öffnen</button>
+            </form>
           </div>
         </Section>
       </div>
