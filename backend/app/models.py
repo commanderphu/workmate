@@ -5,7 +5,7 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.sql import func
 import enum
 import uuid
-
+from typing import Optional
 from .database import Base
 
 
@@ -222,24 +222,34 @@ class TimeEntry(Base):
 class Reminder(Base):
     __tablename__ = "reminders"
 
-    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        primary_key=True,
+        index=True,
+        default=uuid.uuid4,
+    )
 
     employee_id: Mapped[uuid.UUID] = mapped_column(
         PGUUID(as_uuid=True),
         ForeignKey("employees.id", ondelete="CASCADE"),
-        nullable=False, index=True
+        nullable=False,
+        index=True,
     )
 
-    title:       Mapped[str] = mapped_column(String(200), nullable=False)
-    description: Mapped[str | None] = mapped_column(Text)
-    due_at:      Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
+    # payload
+    title: Mapped[str] = mapped_column(Text, nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(Text)
+    due_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=False), index=True)
+    reminder_time: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=False))
+    status: Mapped[Optional[str]] = mapped_column(Text, default="pending")
+    linked_to: Mapped[Optional[str]] = mapped_column(Text)
 
-    status: Mapped[ReminderStatus] = mapped_column(
-        Enum(ReminderStatus, name="reminderstatus"),
-        default=ReminderStatus.pending, nullable=False
+    # meta
+    created: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
     )
-
-    created: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
-
+    updated: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
     employee = relationship("Employee", back_populates="reminders", passive_deletes=True)
+    # relations

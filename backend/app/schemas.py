@@ -79,13 +79,21 @@ class EmployeeUpdate(BaseModel):
     position: Optional[str] = None
     start_date: Optional[datetime] = None
     vacation_days_total: Optional[int] = None   # vorher: 30
-    vacation_days_used: Optional[int] = None   
+    vacation_days_used: Optional[int] = None 
+
+class EmployeeUpdateIn(BaseModel):
+    name: Optional[str] = None
+    role: Optional[str] = None
+    department: Optional[str] = None
+    email: Optional[str] = None
 
 class EmployeeOut(EmployeeBase):
     id: UUID
     created: datetime
     updated: datetime
     model_config = ConfigDict(from_attributes=True)
+
+    
 
 
 # --------------------------
@@ -212,24 +220,36 @@ class ReminderBase(BaseModel):
 
 class ReminderCreate(ReminderBase):
     pass
+class ReminderCreateIn(BaseModel):
+    title: str
+    description: Optional[str] = None     # <— wichtig: description
+    due_at: Optional[datetime] = None
+    reminder_time: Optional[datetime] = None
+    status: Optional[str] = "pending"
+    linked_to: Optional[str] = None
 
+    model_config = {"extra": "ignore"} 
 class ReminderUpdate(BaseModel):
     title: Optional[str] = Field(None, min_length=1, max_length=200)
     description: Optional[str] = None
     due_at: Optional[datetime] = None
     status: Optional[ReminderStatus] = None  # erlauben, aber validieren
 
+
 class ReminderOut(BaseModel):
     id: UUID
     employee_id: UUID
     title: str
-    description: Optional[str]
-    due_at: Optional[datetime]
-    status: ReminderStatus
-    created: datetime
-    updated: datetime
+    description: Optional[str] = None
+    due_at: Optional[datetime] = None
+    reminder_time: Optional[datetime] = None
+    status: Optional[str] = None
+    linked_to: Optional[str] = None
+    created: Optional[datetime] = None
+    updated: Optional[datetime] = None
 
-
+    model_config = {"from_attributes": True}
+    
     @computed_field(return_type=bool)
     @property
     def is_overdue(self) -> bool:

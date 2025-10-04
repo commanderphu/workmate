@@ -1,12 +1,19 @@
 import { createRouter, createWebHistory } from 'vue-router'
-
-const Overview = () => import('../views/Overview.vue')
-const Employee = () => import('../views/Employee.vue')
+import Overview from '@/views/Overview.vue'
+import Employee from '@/views/Employee.vue'
 
 export default createRouter({
   history: createWebHistory(),
   routes: [
-    { path: '/', name: 'overview', component: Overview },
-    { path: '/employee/:employeeId', name: 'employee', component: Employee, props: true },
+    {
+      path: '/dashboard',
+      component: Overview,           // Overview ist die Hülle
+      children: [
+        { path: '', name: 'overview', component: Overview }, // optional
+        // WICHTIG: Param-Name = employeeId (passt zu deinem Code & Backend)
+        { path: 'employee/:employeeId', name: 'employee', component: Employee },
+      ],
+    },
+    { path: '/', redirect: '/dashboard' },
   ],
 })

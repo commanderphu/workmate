@@ -5,9 +5,12 @@ from uuid import UUID, uuid4
 from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import Column
+from sqlalchemy.exc import IntegrityError
+
 
 from app import models, schemas
 from app.database import get_db
+
 
 router = APIRouter(prefix="/employees", tags=["Employees"])
 
@@ -42,7 +45,7 @@ def get_employee(employee_id: UUID, db: Session = Depends(get_db)):
 def create_employee(employee: schemas.EmployeeCreate, db: Session = Depends(get_db)):
     new_emp = models.Employee(
         id=uuid4(),  # <-- Model hat UUID(as_uuid=True), also UUID-Objekt, kein str
-        **employee.dict(),
+        **employee.model_dump(),
         created=datetime.utcnow(),
         updated=datetime.utcnow(),
     )
@@ -57,7 +60,7 @@ def update_employee(employee_id: UUID, updated: schemas.EmployeeUpdate, db: Sess
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
 
-    payload = updated.dict(exclude_unset=True)
+    payload = updated.model_dump(exclude_unset=True)
     for key, value in payload.items():
         setattr(emp, key, value)
     # Set the updated timestamp if 'updated' is a mapped attribute
@@ -65,7 +68,6 @@ def update_employee(employee_id: UUID, updated: schemas.EmployeeUpdate, db: Sess
         emp.updated = datetime.utcnow()
     db.commit()
     db.refresh(emp)
-    return emp
     return emp
 
 @router.delete("/{employee_id}")
@@ -76,3 +78,44 @@ def delete_employee(employee_id: UUID, db: Session = Depends(get_db)):
     db.delete(emp)
     db.commit()
     return {"detail": "Employee deleted"}
+
+@router.put("/by_business/{employee_id}", response_model=schemas.EmployeeOut)
+def update_employee_by_business_id(
+    employee_id: str,
+    payload: schemas.EmployeeUpdateIn,
+    db: Session = Depends(get_db),
+):
+    emp = db.query(models.Employee).filter(models.Employee.employee_id == employee_id).first()
+    if not emp:
+        raise HTTPException(status_code=404, detail="Employee not found")
+
+    data = payload.model_dump(exclude_unset=True)
+
+    # 1) Vorab-Check: E-Mail schon bei anderem Datensatz vergeben?
+    new_email = data.get("email")
+    if new_email:
+        exists = (
+            db.query(models.Employee.id)
+              .filter(models.Employee.email == new_email, models.Employee.id != emp.id)
+              .first()
+        )
+        if exists:
+            raise HTTPException(status_code=409, detail="Email already in use")
+
+    # 2) Felder setzen
+    for k, v in data.items():
+        setattr(emp, k, v)
+
+    if hasattr(emp, "updated"):
+        emp.updated = datetime.utcnow()
+
+    try:
+        db.add(emp)
+        db.commit()
+        db.refresh(emp)
+    except IntegrityError as e:
+        db.rollback()
+        # Falls doch ein anderer Unique-Fehler kommt (z.B. employee_id)
+        raise HTTPException(status_code=409, detail="Unique constraint violation") from e
+
+    return emp
