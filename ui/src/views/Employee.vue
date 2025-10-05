@@ -98,9 +98,10 @@ watch(routeEmployeeId, load)
 
         
       <!-- Tabs (nur mounten, wenn ID vorhanden) -->
-      <Section class="col-span-full w-full" v-if="viewEmployeeId" title="Reminders">
+      <Section v-if="viewEmployeeId" title="Reminders" :hasGrid="false">
         <ReminderTable :employee-id="viewEmployeeId" />
       </Section>
+
 
       <Section v-if="viewEmployeeId" title="Urlaub">
         <VacationTable :employee-id="viewEmployeeId" />
