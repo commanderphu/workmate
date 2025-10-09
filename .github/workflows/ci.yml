@@ -28,7 +28,7 @@ jobs:
       DATABASE_URL: postgresql+psycopg2://workmate:workmate@localhost:5432/workmate
       PYTHONUNBUFFERED: "1"
       PYTHONDONTWRITEBYTECODE: "1"
-      PYTHONPATH: backend/app
+      PYTHONPATH: backend
 
     steps:
       - name: Checkout
