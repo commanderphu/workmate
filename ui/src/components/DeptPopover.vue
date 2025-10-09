@@ -22,18 +22,27 @@ async function load() {
   loading.value = true
   err.value = null
   rows.value = []
+
   try {
-        const data = await api.searchEmployees(props.dept, 50)
-    rows.value = (data || []).map((e: any) => ({
-    id: e.id, employee_id: e.employee_id, name: e.name, position: e.position
+    // liefert EmployeeDto[]
+    const data = await api.searchEmployees(props.dept, 50)
+
+    // in deine leichte Darstellung (EmpLite) mappen
+    rows.value = (Array.isArray(data) ? data : []).map(e => ({
+      id: e.id,
+      employee_id: e.employee_id,
+      name: e.name ?? null,
+      position: e.position ?? null,
     }))
-await nextTick()
+
+    await nextTick()
   } catch (e: any) {
     err.value = e?.message ?? 'Laden fehlgeschlagen.'
   } finally {
     loading.value = false
   }
 }
+
 
 function toggle() {
   open.value = !open.value

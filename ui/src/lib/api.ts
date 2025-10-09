@@ -15,6 +15,15 @@ async function http<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>
 }
 
+export type EmployeeDto = {
+  id: string
+  employee_id: string
+  name: string
+  email?: string
+  department?: string | null
+  position?: string | null
+}
+
 type ReminderPayload = {
   title?: string;
   description?: string;
@@ -59,7 +68,7 @@ export const api = {
 },
 searchEmployees(q: string, limit = 20) {
   const params = new URLSearchParams({ q, limit: String(limit) })
-  return http(`/employees?${params.toString()}`)
+  return http<EmployeeDto[]>(`/employees?${params.toString()}`)
 },
   metaDepartments() {
     return http<string[]>('/meta/departments')

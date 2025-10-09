@@ -117,8 +117,8 @@ async function fetchList() {
   loading.value = true
   error.value = null
   try {
-    const res = await api.listRemindersByBusiness(props.employeeId)
-    items.value = Array.isArray(res) ? res : []
+    const res = await api.listRemindersByBusiness(props.employeeId) as unknown
+    items.value = Array.isArray(res) ? (res as Reminder[]) : []
   } catch (e: any) {
     error.value = e?.message ?? 'Laden fehlgeschlagen.'
     items.value = []
@@ -143,7 +143,7 @@ async function submitCreate() {
       title,
       description: formNotes.value.trim() || undefined,
       due_at: dueIso,
-    })
+    }) as Reminder
     items.value.unshift(created)   // ohne Reload updaten
     showCreate.value = false
   } catch (e: any) {
@@ -167,7 +167,7 @@ async function submitEdit() {
       description: editNotes.value.trim() || undefined,
       due_at:      editDue.value ? new Date(editDue.value).toISOString() : null,
     }
-    const updated = await api.updateReminder(editId.value, payload)
+    const updated = await api.updateReminder(editId.value, payload) as Reminder
     const idx = items.value.findIndex(r => r.id === editId.value)
     if (idx !== -1) items.value[idx] = updated
     showEdit.value = false
@@ -180,7 +180,7 @@ async function snoozeOneDay(id: string) {
   const base = r?.due_at ? new Date(r.due_at) : new Date()
   base.setDate(base.getDate() + 1)
   try {
-    const updated = await api.updateReminder(id, { due_at: base.toISOString(), status: 'pending' })
+    const updated = await api.updateReminder(id, { due_at: base.toISOString(), status: 'pending' }) as Reminder
     const idx = items.value.findIndex(x => x.id === id)
     if (idx !== -1) items.value[idx] = updated
   } catch {}
@@ -189,7 +189,7 @@ async function snoozeOneDay(id: string) {
 
 async function markDone(id: string) {
   try {
-    const updated = await api.updateReminder(id, { status: 'done' })
+    const updated = await api.updateReminder(id, { status: 'done' }) as Reminder
     const idx = items.value.findIndex(r => r.id === id)
     if (idx !== -1) items.value[idx] = updated
   } catch {}

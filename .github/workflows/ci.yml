@@ -1,4 +1,4 @@
-name: CI (Local Runner)
+name: CI (self-hosted)
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
   workflow_dispatch: {}
 
-# Damit nie mehrere Runs pro Branch gleichzeitig laufen
+# Nie mehrere gleichzeitige Läufe pro Branch
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -15,16 +15,19 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  # gemeinsame Defaults
+  PYTHONUNBUFFERED: "1"
+  PYTHONDONTWRITEBYTECODE: "1"
+
 jobs:
-  backend-tests:
+  backend:
     name: 🧠 Backend • FastAPI + Alembic + Pytest
-    runs-on: [self-hosted, Linux, X64]   # Läuft auf deinem phu-arch Runner
-    timeout-minutes: 15
+    runs-on: [self-hosted, Linux, X64]
+    timeout-minutes: 20
 
     env:
       DATABASE_URL: postgresql+psycopg2://workmate:workmate@localhost:5432/workmate
-      PYTHONUNBUFFERED: "1"
-      PYTHONDONTWRITEBYTECODE: "1"
       PYTHONPATH: ${{ github.workspace }}/backend
 
     steps:
@@ -35,48 +38,45 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: "pip"
+          cache: pip
           cache-dependency-path: backend/requirements.txt
 
-      - name: 📦 Install dependencies
+      - name: 📦 Install deps
         run: |
-          pip install --upgrade pip
+          python -m pip install --upgrade pip
           pip install -r backend/requirements.txt
           pip install pytest pytest-asyncio httpx requests psycopg2-binary
 
-      - name: 🧱 Start Postgres (lokal via Docker)
+      - name: 🧱 Start Postgres (Docker)
         run: |
-          docker run -d \
-            --name workmate-db \
+          docker rm -f workmate-db 2>/dev/null || true
+          docker run -d --name workmate-db \
             -e POSTGRES_DB=workmate \
             -e POSTGRES_USER=workmate \
             -e POSTGRES_PASSWORD=workmate \
-            -p 5432:5432 \
-            postgres:16
+            -p 5432:5432 postgres:16
           echo "Waiting for Postgres..."
-          for i in {1..60}; do
-            if docker exec workmate-db pg_isready -U workmate -d workmate > /dev/null 2>&1; then
-              echo "Postgres ready"; break
-            fi
+          for i in {1..90}; do
+            docker exec workmate-db pg_isready -U workmate -d workmate >/dev/null 2>&1 && { echo "Postgres ready"; break; }
             sleep 2
           done
 
-      - name: 🔁 Alembic upgrade head
+      - name: 🔁 Alembic upgrade
         working-directory: backend
         run: alembic upgrade head
 
-      - name: 🧪 Run tests
+      - name: 🧪 Pytest
         working-directory: backend
         run: pytest -q
 
-      - name: 🧹 Cleanup containers (always)
+      - name: 🧹 Cleanup DB (always)
         if: always()
         run: docker rm -f workmate-db || true
 
-  frontend-build:
-    name: 💻 Frontend • Vite/Vue Build
+  frontend:
+    name: 💻 Frontend • Vite/Vue build
     runs-on: [self-hosted, Linux, X64]
-    timeout-minutes: 10
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: ui
@@ -92,7 +92,27 @@ jobs:
           cache: "npm"
           cache-dependency-path: ui/package-lock.json
 
-      - name: 📦 Install & Build
-        run: |
-          npm ci
-          npm run build --if-present
+      - name: 📦 Install
+        run: npm ci
+
+      - name: 🔧 Type Check (optional)
+        run: npx vue-tsc --noEmit
+
+      - name: 🏗️ Build
+        run: npm run build
+
+      - name: "📦 Artefakt: dist"
+        if: ${{success()}}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-dist
+          path: ui/dist
+          if-no-files-found: error
+          retention-days: 7
+
+  done:
+    name: ✅ All good
+    runs-on: [self-hosted, Linux, X64]
+    needs: [backend, frontend]
+    steps:
+      - run: echo "Backend + Frontend erfolgreich gebaut & getestet 🎉"
