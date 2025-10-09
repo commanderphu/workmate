@@ -26,7 +26,7 @@ jobs:
     runs-on: [self-hosted, Linux, X64]
     timeout-minutes: 20
     env:
-      DATABASE_URL: postgresql+psycopg2://workmate:workmate@localhost:5432/workmate
+      DATABASE_URL: postgresql+psycopg2://workmate:workmate@localhost:55432/workmate
       PYTHONPATH: ${{ github.workspace }}/backend
 
     steps:
