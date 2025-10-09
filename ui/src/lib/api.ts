@@ -1,4 +1,5 @@
-import type { TopEmployee, UpcomingAbsence, UpcomingVacation } from "./types"
+import type { DashboardOverview, TopEmployee, UpcomingAbsence, UpcomingVacation, EmployeeOverview } from "./types"
+
 
 const BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 
@@ -24,17 +25,18 @@ type ReminderPayload = {
 };
 function clean<T extends Record<string, any>>(o: T): Partial<T> {
   return Object.fromEntries(
-    Object.entries(o).filter(([, v]) => v !== undefined && v !== '')
+    Object.entries(o).filter(([, v]) => v !== undefined && v !== '' && v !== null)
   ) as Partial<T>;
 }
 
+
 export const api = {
   overview() {
-    return http('/dashboard/overview')
+    return http<DashboardOverview>('/dashboard/overview')
   },
   employee(employeeId: string) {
     // Business-ID wie "KIT-0001"
-    return http(`/dashboard/employee/${encodeURIComponent(employeeId)}`)
+    return http<EmployeeOverview>(`/dashboard/employee/${encodeURIComponent(employeeId)}`)
   },
   topEmployees(limit = 5) {
     return http<TopEmployee[]>(`/dashboard/reminders/top?limit=${limit}`)
@@ -54,6 +56,10 @@ export const api = {
     method: 'PUT',
     body: JSON.stringify(data),
   })
+},
+searchEmployees(q: string, limit = 20) {
+  const params = new URLSearchParams({ q, limit: String(limit) })
+  return http(`/employees?${params.toString()}`)
 },
   metaDepartments() {
     return http<string[]>('/meta/departments')

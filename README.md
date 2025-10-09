@@ -1,138 +1,181 @@
-# Workmate 🗂️
+# 🧠 Workmate – The Digital Backoffice by K.I.T. Solutions 
 
-**Workmate** ist ein internes Tool zur Verwaltung von administrativen Workflows  
-(Personalakte, Krankmeldungen, Urlaubsanträge, Zeiterfassung, Monatsabrechnung).  
-Es soll den Büroalltag erleichtern und Prozesse digitalisieren.
+> *„Automatisiere das, was dich aufhält. Lebe das, was dich antreibt.“*  
 
 ---
 
-## 🚀 Features
-- 📁 **Personalakte** – Dokumentenverwaltung pro Mitarbeiter
-- 🏥 **Krankmeldungen** – inkl. Upload von Attesten
-- 🌴 **Urlaubsanträge** – Status & Genehmigungen
-- ⏱️ **Zeiterfassung** – Übersicht, Verlinkungen (z. B. Timeboard, Fieldglass)
-- 📅 **Reminders** – ToDo-System mit Fälligkeiten & Status
-- 📊 **Dashboard** – zentrale Übersicht über wichtige Daten
+## 📖 Über Workmate
 
-## 🔍 Feature-Rundgang
-Damit du dir schneller einen Eindruck verschaffen kannst, wie sich die API im Alltag verhält, findest du hier einen kurzen Walkthrough der wichtigsten Endpunkte.
+**Workmate** ist das interne **HR-, Verwaltungs- und Automatisierungssystem**  
+von [K.I.T. Solutions](https://kit-it-koblenz.de).  
+Es wurde entwickelt, um **Verwaltung, Backoffice und interne Workflows**  
+in einer klaren, ethischen und offenen IT-Umgebung zu bündeln.  
 
-### Mitarbeiterverwaltung
-- `GET /employees/` listet Mitarbeitende mit Such- und Paging-Parametern, z. B. `q`, `limit` oder `offset`, um gezielt Personalakten zu finden.【F:backend/app/routers/employees.py†L17-L31】
-- `POST /employees/` legt neue Mitarbeitende an und vergibt dabei automatisch eine UUID als Primärschlüssel sowie Zeitstempel für `created` und `updated`.【F:backend/app/routers/employees.py†L33-L48】
-- Für Korrekturen gibt es `PUT /employees/{id}` bzw. `DELETE /employees/{id}`; alternativ kannst du mit `PUT /employees/by_business/{employee_id}` auch über die externe Personalnummer aktualisieren, inklusive Konfliktprüfung auf doppelte E-Mails.【F:backend/app/routers/employees.py†L50-L97】
-
-### Dokumente & Krankmeldungen
-- `POST /documents/` hinterlegt Dateien wie Atteste oder Verträge zu einem Mitarbeitenden und speichert Status, Upload-Datum und optionale Notizen.【F:backend/app/routers/documents.py†L12-L37】
-- `GET /documents/` bietet Filter nach Mitarbeitenden, Status, Dokumenttyp und Freitextsuche in Titel/Notizen – ideal für Audits.【F:backend/app/routers/documents.py†L22-L37】
-- Krankmeldungen werden über `POST /sick-leaves/` inkl. Verknüpfung zu einem Dokument erfasst; die Liste ist über optionale Filter wie `employee_id` und Pagination zugänglich.【F:backend/app/routers/sick_leaves.py†L14-L35】
-
-### Urlaubsverwaltung & Zeiterfassung
-- Urlaubsanträge kommen über `POST /vacation-requests/` ins System; sie tragen Statuswerte wie `pending`, `approved` oder `rejected`, die per Update-Endpunkt angepasst werden können.【F:backend/app/models.py†L108-L151】
-- Die Zeiterfassung (`/time-entries/`) speichert Start-/Endzeiten inklusive Notizen und lässt sich für einzelne Mitarbeitende filtern, um Tages- oder Wochenübersichten zu erzeugen.【F:backend/app/routers/time_entries.py†L9-L37】
-
-### Reminder & ToDo-Management
-- `POST /reminders/` legt Aufgaben mit Fälligkeit an und berechnet serverseitig ein `is_overdue`-Flag, sobald eine offene Aufgabe überfällig ist.【F:backend/app/routers/reminders.py†L54-L96】
-- Für Fachbereiche ohne UUID-Kenntnis gibt es Business-Routen wie `GET /reminders/by_business/{employee_id}`, die automatisch nach der Personalnummer auflösen und sortiert zurückgeben.【F:backend/app/routers/reminders.py†L26-L52】
-- Statuswechsel (z. B. erledigt markieren) erfolgen bequem über `POST /reminders/{id}/done`.【F:backend/app/routers/reminders.py†L124-L143】
-
-### Daten befüllen & Demo
-- Mit `python backend/seed_workmate.py --employees 5` lässt sich eine lokale Instanz per REST-Calls mit Testdaten füllen. Das Skript erzeugt Mitarbeitende, Dokumente, Reminder, Krankmeldungen, Urlaube und Zeiteinträge in einem Rutsch.【F:backend/seed_workmate.py†L1-L132】
+Ziel ist es, ein **modulares, lokal hostbares System** zu schaffen, das  
+ohne externe Cloud-Dienste funktioniert – ganz im Sinne des K.I.T.-Leitsatzes:  
+> 🧩 *„IT muss nicht schmutzig sein.“*
 
 ---
 
-## 🛠️ Tech Stack
-- **Backend**: [FastAPI](https://fastapi.tiangolo.com/)  
-- **Database**: PostgreSQL  
-- **ORM**: SQLAlchemy  
-- **Migrations**: Alembic  
-- **Frontend (geplant)**: SvelteKit / Vue / React  
-- **Automatisierungen (optional)**: n8n  
-- **Deployment**: Docker & Docker Compose, Unraid/Hetzner  
+## 🏗️ Aktueller Stand (Oktober 2025)
+
+- Entwicklungsstatus: **Pre-Alpha / lokal aktiv in Entwicklung**
+- Architektur: **FastAPI (Backend)** + **PostgreSQL** + **Vue/React (Frontend)**
+- Status: Läuft lokal auf PC/Notebook, Backend & Frontend manuell gestartet
+- Geplant: Docker-Compose Setup & Deployment auf K.I.T.-Servern
 
 ---
 
-## 📂 Projektstruktur
-```
+## ⚙️ Tech Stack
+
+| Komponente | Technologie | Beschreibung |
+|-------------|--------------|---------------|
+| **Backend** | [FastAPI](https://fastapi.tiangolo.com/) | API, Authentifizierung, Logik |
+| **Datenbank** | PostgreSQL | zentrale Datenhaltung |
+| **Frontend** | Vue 3 / React | Benutzeroberfläche (noch im Aufbau) |
+| **ORM** | SQLAlchemy | Datenbankanbindung |
+| **Containerisierung (geplant)** | Docker / Compose | lokale & produktive Deployments |
+| **Reverse Proxy (später)** | Traefik | interne Diensteverwaltung |
+| **Integration (später)** | Paperless NGX, Nextcloud | Dokumente, HR-Unterlagen, Sync |
+
+---
+
+## 📂 Projektstruktur (aktuell)
+
+```yaml
 workmate/
 ├── backend/
-│   ├── app/
-│   │   ├── main.py          # Einstiegspunkt
-│   │   ├── models.py        # SQLAlchemy-Modelle
-│   │   ├── schemas.py       # Pydantic-Schemas
-│   │   ├── database.py      # DB-Setup
-│   │   ├── routers/         # API-Router (Employees, SickLeaves, ...)
-│   │   └── core/            # Konfiguration, Security, Utils
-│   ├── alembic/             # Migrationen
-│   └── tests/               # Unit- & Integrationstests
-├── frontend/                # (noch in Entwicklung)
-├── docker-compose.yml
-├── .env.example
+│ ├── app/
+│ │ ├── main.py
+│ │ ├── models/
+│ │ ├── routers/
+│ │ └── core/
+│ ├── requirements.txt
+│ └── .env
+│
+├── frontend/
+│ ├── src/
+│ ├── public/
+│ └── package.json
+│
+├── docker-compose.yml (in Planung)
 └── README.md
 ```
 
+
 ---
 
-## ⚙️ Installation & Setup
+## 🚀 Lokale Entwicklung
 
-### Voraussetzungen
-- Python **3.11+**  
-- PostgreSQL  
-- (Optional) Docker & Docker Compose  
+### 1️⃣ Backend starten
 
-### Schritte
 ```bash
-# Repository klonen
-git clone https://github.com/USERNAME/workmate.git
-cd workmate
-
-# Dependencies installieren
+cd backend
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 
-# .env anlegen
-cp .env.example .env
-
-# Datenbank migrieren
-alembic upgrade head
-
-# Starten
+# Entwicklungsserver starten
 uvicorn app.main:app --reload
 ```
 
-### Mit Docker starten
+Server läuft dann standardmäßig unter:
+➡️ [API/Backend](http://127.0.0.1:8000/docs)
+
+### 2️⃣ Frontend starten
+
 ```bash
-docker-compose up -d
+Code kopieren
+cd frontend
+pnpm install
+pnpm run dev
 ```
 
-API verfügbar unter:  
-- Swagger UI → http://localhost:8000/docs  
-- ReDoc → http://localhost:8000/redoc  
+Frontend läuft unter:
+➡️ [Frontend](http://127.0.0.1:5173)
 
----
+### 3️⃣ Datenbank (PostgreSQL)
 
-## 🧪 Tests
+Aktuell lokal oder via Docker-Container (optional):
+
 ```bash
-pytest
-```
+Code kopieren
+docker run --name workmate-db -e POSTGRES_USER=einfachnurphu \
+  -e POSTGRES_PASSWORD=deinpasswort \
+  -e POSTGRES_DB=workmate \
+  -p 5432:5432 -d postgres
+```  
+---
+
+## 🧩 Aktuelle Module
+
+Modul | Beschreibung | Status
+|-----|-----|------|
+Dashboard | Übersicht über Reminder, Mitarbeiter, Dokumente | 🟢 in Entwicklung
+HR / Employee | Mitarbeiterdaten, Verträge, Rollen | 🟡 Basisstruktur vorhanden
+Reminder | Aufgaben, Fristen, Erinnerungen | 🟢 funktionsfähig
+Vacation / Absences | Urlaubsplanung & Abwesenheiten | 🟡 Konzept vorhanden
+Documents (Paperless) | Verknüpfung mit Paperless NGX | 🔜 geplant
+Auth / Login | Nutzerverwaltung, Sessions | 🔜 geplant
+Finance / Projects | Rechnungen, Projekte, Zeitaufwand |🔜 geplant
 
 ---
 
-## 📌 Roadmap
-- [x] Basis-API für Mitarbeiterverwaltung  
-- [x] Krankmeldungen & Urlaubsanträge  
-- [x] Reminder-/Fristensystem  
-- [ ] Dashboard mit Analytics  
-- [ ] Frontend-UI (SvelteKit/Vue/React)  
-- [ ] Authentifizierung & Rollen  
-- [ ] Cloud-Deployment (Hetzner / Unraid)  
+## 🧠 Vision (Phase 2–3)
+
+Vollständige Automatisierung durch **Gideon** (Monitoring, KI, Workflows)
+
+Integration mit **Paperless NGX** (Dokumentenarchivierung)
+
+Integration mit **Nextcloud** (Dateiverwaltung)
+
+Erweiterte Module:
+
+✅ HR & Onboarding
+
+✅ Reminder & Aufgaben
+
+✅ Support / Tickets
+
+✅ Finanzen & Buchhaltung
+
+✅ Zeiterfassung
+
+Ziel ist eins **sauberes, modulares Intranet-System** für kleine Unternehmen,
+Freelancer & nachhaltige IT-Teams.
 
 ---
 
-## 🤝 Contribution
-Pull Requests sind willkommen!  
-Für größere Änderungen bitte zuerst ein **Issue** eröffnen, um die Änderungen zu besprechen.  
+## 🧰 Entwicklungs-Notizen
+
+Entwickelt von: **Joshua Phu Bein (K.I.T. Solutions)**
+
+Aktuelle Version: `v0.1-dev`
+
+Entwicklungsphase: Backend + UI-Integration
+
+Repository: [GitHub (privat / dev)](https://github.com/commanderphu/workmate)
+
+Betriebssystem: Fedora Linux
+
+Lokales Testsystem: Unraid + Docker (Paperless / Wiki.js etc.)
 
 ---
 
-## 📜 Lizenz
-MIT License © 2025 Joshua Phu Bein
+## 🧾 Lizenz
+
+© 2025 K.I.T. Solutions – Alle Rechte vorbehalten.
+Dieses Projekt ist Teil der internen Toolchain von K.I.T. Solutions (Koblenz).
+Eine Open-Source-Version ist langfristig geplant.
+
+---
+
+## 💬 Kontakt
+
+K.I.T. Solutions
+Joshua Phu Bein
+📍 Koblenz, Deutschland
+🌐 [kit-it-koblenz.de](https://kit-it-koblenz.de)
+📧 [info[at]kit-it-koblenz.de](mailto://info@kit-it-koblenz.de)
+
+---

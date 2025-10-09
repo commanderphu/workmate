@@ -79,7 +79,7 @@ watch(routeEmployeeId, load)
           <h1>{{ headerId }} — {{ headerName }}</h1>
           <p class="muted text-sm">{{ headerDept }}</p>
         </div>
-        <RouterLink to="/dashboard" class="btn">← Zurück</RouterLink>
+        <RouterLink to="/dashboard" class="btn" @click.prevent="$router.back()">← Zurück</RouterLink>
       </header>
 
 

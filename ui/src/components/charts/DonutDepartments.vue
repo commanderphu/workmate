@@ -9,6 +9,7 @@ ChartJS.register(Tooltip, Legend, ArcElement)
 
 type DeptCounts = Record<string, number>
 const props = defineProps<{ data: DeptCounts }>()
+const emit = defineEmits<{ (e: 'slice-click', label: string): void }>()
 
 const labels = Object.keys(props.data || {})
 const values = Object.values(props.data || {})
@@ -45,13 +46,23 @@ const options = {
   },
   cutout: '55%'
 }
+function onClick(_: any, elements: any[]) {
+  if (!elements?.length) return
+  const index = elements[0].index
+  const label = labels[index]
+  emit('slice-click', label)
+}
+const onChartReady = (chart: any) => {
+  chart.options.onClick = onClick
+}
+
 </script>
 
 <template>
   <div class="card h-72">
     <div class="card-title mb-2">Departments (Anteile)</div>
     <div v-if="labels.length" class="h-[220px]">
-      <Doughnut :data="chartData" :options="options" />
+      <Doughnut :data="chartData" :options="options" @chart:rendered="onChartReady" />
     </div>
     <div v-else class="muted">Keine Department-Daten.</div>
   </div>

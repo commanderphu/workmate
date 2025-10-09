@@ -5,6 +5,7 @@ import {
   Tooltip, Legend, BarElement, CategoryScale, LinearScale,
 } from 'chart.js'
 
+
 ChartJS.register(Tooltip, Legend, BarElement, CategoryScale, LinearScale)
 
 const props = defineProps<{
@@ -12,6 +13,8 @@ const props = defineProps<{
   overdue: number
   next7: number
 }>()
+
+const emit = defineEmits<{ (e: 'bar-click', kind: 'pending' | 'overdue' | 'next7'): void }>()
 
 const chartData = {
   labels: ['Pending', 'Overdue', '7 Tage'],
@@ -49,13 +52,25 @@ const options = {
     }
   }
 }
+// Click-Handler – erfordert chart.js getElementsAtEventForMode via vue-chartjs wrapper
+function onClick(_: any, elements: any[]) {
+  if (!elements?.length) return
+  const index = elements[0].index
+  const kind = index === 0 ? 'pending' : index === 1 ? 'overdue' : 'next7'
+  emit('bar-click', kind)
+}
+
+const onChartReady = (chart: any) => {
+  chart.options.onClick = (_: any, elements: any[]) => onClick(_, elements)
+}
+
 </script>
 
 <template>
   <div class="card h-72">
     <div class="card-title mb-2">Reminders</div>
     <div class="h-[220px]">
-      <Bar :data="chartData" :options="options" />
+      <Bar :data="chartData" :options="options" @chart:rendered="onChartReady" />
     </div>
   </div>
 </template>
