@@ -155,7 +155,7 @@ async function searchEmployees() {
   } finally {
     addLoading.value = false
   }
-
+}
 
 // Debounce (300 ms)
 let addSearchTimer: number | undefined
