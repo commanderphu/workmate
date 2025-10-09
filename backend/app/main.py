@@ -19,7 +19,7 @@ app.add_middleware(
 )
 
 app.mount("/app/uploads", StaticFiles(directory="app/uploads"), name="uploads")
-Base.metadata.create_all(bind=engine)
+# Base.metadata.create_all(bind=engine)
 
 register_routers(app)
 

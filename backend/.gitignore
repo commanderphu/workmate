@@ -24,7 +24,6 @@ var/
 *.egg
 
 # PyInstaller
-#  Usually these files are written by a python script from a template
 *.manifest
 *.spec
 
@@ -104,10 +103,20 @@ cython_debug/
 # VS Code
 .vscode/
 
-# MacOS
+# MacOS / Windows
 .DS_Store
-
-# Windows
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+
+# ---- Project specific ----
+
+# Alembic cache only (nicht .py!)
+alembic/versions/*.pyc
+alembic/versions/__pycache__/
+# ⚠️ NICHT: alembic/versions/*.py → Migrations müssen versioniert werden
+
+# Uploads / runtime data
+app/uploads/
+logs/
+*.log

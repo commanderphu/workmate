@@ -1,0 +1,35 @@
+# Global / system
+.DS_Store
+Thumbs.db
+*.log
+.env
+.env.*
+
+# IDEs
+.vscode/
+.idea/
+
+# Docker
+*.pid
+*.sock
+*.tmp
+docker-data/
+db_data/
+**/node_modules/
+**/__pycache__/
+
+# Python venvs
+venv/
+venv*/ 
+
+# Frontend builds
+ui/dist/
+ui/.vite/
+ui/node_modules/
+
+# Backend uploads / runtime
+backend/app/uploads/
+backend/logs/
+
+# Ignore local configs
+*.local

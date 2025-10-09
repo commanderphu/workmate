@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.env
+.env.*
+dist/
+build/
+.coverage
+pytest_cache/
+alembic/versions/*.pyc
+app/uploads/
+ui/

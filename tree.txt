@@ -1,0 +1,214 @@
+.
+├── backend
+│   ├── app
+│   │   ├── database.py
+│   │   ├── main.py
+│   │   ├── models.py
+│   │   ├── __pycache__
+│   │   ├── routers
+│   │   ├── schemas.py
+│   │   ├── tests
+│   │   ├── uploads
+│   │   └── utils
+│   ├── backend_start.sh
+│   ├── kit-staff
+│   │   ├── seed_kit_team.py
+│   │   └── workmate_employees_basic.json
+│   ├── requirements.txt
+│   ├── seed_workmate.py
+│   └── venv
+│       ├── bin
+│       ├── include
+│       ├── lib
+│       ├── lib64 -> lib
+│       └── pyvenv.cfg
+├── pocketbase-backend
+│   └── pb_data
+├── QUICKSTART.md
+├── README.md
+├── tmux-start.sh
+├── tree.txt
+└── ui
+    ├── env.d.ts
+    ├── index.html
+    ├── node_modules
+    │   ├── alien-signals
+    │   ├── @alloc
+    │   ├── ansi-regex
+    │   ├── ansi-styles
+    │   ├── anymatch
+    │   ├── any-promise
+    │   ├── arg
+    │   ├── asynckit
+    │   ├── autoprefixer
+    │   ├── axios
+    │   ├── @babel
+    │   ├── balanced-match
+    │   ├── binary-extensions
+    │   ├── brace-expansion
+    │   ├── braces
+    │   ├── browserslist
+    │   ├── call-bind-apply-helpers
+    │   ├── camelcase-css
+    │   ├── caniuse-lite
+    │   ├── chart.js
+    │   ├── chokidar
+    │   ├── color-convert
+    │   ├── color-name
+    │   ├── combined-stream
+    │   ├── commander
+    │   ├── cross-spawn
+    │   ├── cssesc
+    │   ├── csstype
+    │   ├── de-indent
+    │   ├── delayed-stream
+    │   ├── didyoumean
+    │   ├── dlv
+    │   ├── dunder-proto
+    │   ├── eastasianwidth
+    │   ├── electron-to-chromium
+    │   ├── emoji-regex
+    │   ├── entities
+    │   ├── @esbuild
+    │   ├── esbuild
+    │   ├── escalade
+    │   ├── es-define-property
+    │   ├── es-errors
+    │   ├── es-object-atoms
+    │   ├── es-set-tostringtag
+    │   ├── estree-walker
+    │   ├── fast-glob
+    │   ├── fastq
+    │   ├── fill-range
+    │   ├── follow-redirects
+    │   ├── foreground-child
+    │   ├── form-data
+    │   ├── fraction.js
+    │   ├── function-bind
+    │   ├── get-intrinsic
+    │   ├── get-proto
+    │   ├── glob
+    │   ├── glob-parent
+    │   ├── gopd
+    │   ├── hasown
+    │   ├── has-symbols
+    │   ├── has-tostringtag
+    │   ├── he
+    │   ├── @heroicons
+    │   ├── @isaacs
+    │   ├── is-binary-path
+    │   ├── is-core-module
+    │   ├── isexe
+    │   ├── is-extglob
+    │   ├── is-fullwidth-code-point
+    │   ├── is-glob
+    │   ├── is-number
+    │   ├── jackspeak
+    │   ├── jiti
+    │   ├── @jridgewell
+    │   ├── @kurkle
+    │   ├── lilconfig
+    │   ├── lines-and-columns
+    │   ├── lru-cache
+    │   ├── magic-string
+    │   ├── math-intrinsics
+    │   ├── merge2
+    │   ├── micromatch
+    │   ├── mime-db
+    │   ├── mime-types
+    │   ├── minimatch
+    │   ├── minipass
+    │   ├── muggle-string
+    │   ├── mz
+    │   ├── nanoid
+    │   ├── @nodelib
+    │   ├── node-releases
+    │   ├── normalize-path
+    │   ├── normalize-range
+    │   ├── object-assign
+    │   ├── object-hash
+    │   ├── package-json-from-dist
+    │   ├── path-browserify
+    │   ├── path-key
+    │   ├── path-parse
+    │   ├── path-scurry
+    │   ├── picocolors
+    │   ├── picomatch
+    │   ├── pify
+    │   ├── pirates
+    │   ├── @pkgjs
+    │   ├── postcss
+    │   ├── postcss-import
+    │   ├── postcss-js
+    │   ├── postcss-load-config
+    │   ├── postcss-nested
+    │   ├── postcss-selector-parser
+    │   ├── postcss-value-parser
+    │   ├── proxy-from-env
+    │   ├── queue-microtask
+    │   ├── read-cache
+    │   ├── readdirp
+    │   ├── resolve
+    │   ├── reusify
+    │   ├── @rolldown
+    │   ├── @rollup
+    │   ├── rollup
+    │   ├── run-parallel
+    │   ├── shebang-command
+    │   ├── shebang-regex
+    │   ├── signal-exit
+    │   ├── source-map-js
+    │   ├── string-width
+    │   ├── string-width-cjs
+    │   ├── strip-ansi
+    │   ├── strip-ansi-cjs
+    │   ├── sucrase
+    │   ├── supports-preserve-symlinks-flag
+    │   ├── tailwindcss
+    │   ├── thenify
+    │   ├── thenify-all
+    │   ├── tinyglobby
+    │   ├── to-regex-range
+    │   ├── ts-interface-checker
+    │   ├── @types
+    │   ├── typescript
+    │   ├── undici-types
+    │   ├── update-browserslist-db
+    │   ├── util-deprecate
+    │   ├── vite
+    │   ├── @vitejs
+    │   ├── @volar
+    │   ├── vscode-uri
+    │   ├── @vue
+    │   ├── vue
+    │   ├── vue-chartjs
+    │   ├── vue-router
+    │   ├── vue-tsc
+    │   ├── which
+    │   ├── wrap-ansi
+    │   ├── wrap-ansi-cjs
+    │   └── yaml
+    ├── package.json
+    ├── package-lock.json
+    ├── postcss.config.js
+    ├── public
+    │   └── vite.svg
+    ├── README.md
+    ├── src
+    │   ├── App.vue
+    │   ├── assets
+    │   ├── components
+    │   ├── index.css
+    │   ├── lib
+    │   ├── main.ts
+    │   ├── pages
+    │   ├── router
+    │   ├── views
+    │   └── vite-env.d.ts
+    ├── tailwind.config.js
+    ├── tsconfig.app.json
+    ├── tsconfig.json
+    ├── tsconfig.node.json
+    └── vite.config.ts
+
+182 directories, 30 files
