@@ -37,7 +37,7 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS}
       PYTHONUNBUFFERED: 1
       PYTHONDONTWRITEBYTECODE: 1
-      PYTHONPATH: /app
+      PYTHONPATH: backend/
     volumes:
       - ./backend:/app
       - ./backend/app/uploads:/app/app/uploads
