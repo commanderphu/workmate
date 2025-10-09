@@ -1,4 +1,4 @@
-name: CI
+name: CI (Local Runner)
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
   workflow_dispatch: {}
 
-# Verhindert parallele doppelte Runs pro Branch
+# Damit nie mehrere Runs pro Branch gleichzeitig laufen
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -17,24 +17,9 @@ permissions:
 
 jobs:
   backend-tests:
-    name: Backend • FastAPI + Alembic + Pytest
-    runs-on: ubuntu-latest
+    name: 🧠 Backend • FastAPI + Alembic + Pytest
+    runs-on: [self-hosted, Linux, X64]   # Läuft auf deinem phu-arch Runner
     timeout-minutes: 15
-
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: workmate
-          POSTGRES_PASSWORD: workmate
-          POSTGRES_DB: workmate
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd="pg_isready -U workmate -d workmate"
-          --health-interval=5s
-          --health-timeout=5s
-          --health-retries=20
 
     env:
       DATABASE_URL: postgresql+psycopg2://workmate:workmate@localhost:5432/workmate
@@ -46,46 +31,51 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Python
+      - name: 🐍 Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: "pip"
           cache-dependency-path: backend/requirements.txt
 
-      - name: Install deps
+      - name: 📦 Install dependencies
         run: |
           pip install --upgrade pip
           pip install -r backend/requirements.txt
           pip install pytest pytest-asyncio httpx requests psycopg2-binary
 
-      - name: Wait for Postgres
+      - name: 🧱 Start Postgres (lokal via Docker)
         run: |
-          python - <<'PY'
-          import os, time, psycopg2
-          url = os.environ["DATABASE_URL"].replace("+psycopg2","")
-          for i in range(120):
-              try:
-                  psycopg2.connect(url).close()
-                  print("DB ready"); break
-              except Exception as e:
-                  print(f"DB not ready ({i}): {e}")
-                  time.sleep(1)
-          else:
-              raise SystemExit("DB not healthy in time")
-          PY
+          docker run -d \
+            --name workmate-db \
+            -e POSTGRES_DB=workmate \
+            -e POSTGRES_USER=workmate \
+            -e POSTGRES_PASSWORD=workmate \
+            -p 5432:5432 \
+            postgres:16
+          echo "Waiting for Postgres..."
+          for i in {1..60}; do
+            if docker exec workmate-db pg_isready -U workmate -d workmate > /dev/null 2>&1; then
+              echo "Postgres ready"; break
+            fi
+            sleep 2
+          done
 
-      - name: Alembic upgrade head
+      - name: 🔁 Alembic upgrade head
         working-directory: backend
         run: alembic upgrade head
 
-      - name: Run tests
+      - name: 🧪 Run tests
         working-directory: backend
         run: pytest -q
 
+      - name: 🧹 Cleanup containers (always)
+        if: always()
+        run: docker rm -f workmate-db || true
+
   frontend-build:
-    name: Frontend • Vite/Vue build
-    runs-on: ubuntu-latest
+    name: 💻 Frontend • Vite/Vue Build
+    runs-on: [self-hosted, Linux, X64]
     timeout-minutes: 10
     defaults:
       run:
@@ -95,14 +85,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: 🧩 Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: "npm"
           cache-dependency-path: ui/package-lock.json
 
-      - name: Install & Build
+      - name: 📦 Install & Build
         run: |
           npm ci
           npm run build --if-present
