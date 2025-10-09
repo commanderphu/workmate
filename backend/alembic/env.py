@@ -6,8 +6,7 @@ from alembic import context
 
 # 👉 deine SQLAlchemy Base + Models importieren
 from app.database import Base
-from app import models  # noqa: F401  (stellt sicher, dass alle Tabellen registriert sind)
-
+from app import models 
 # Alembic Config
 config = context.config
 
