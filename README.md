@@ -1,3 +1,5 @@
+[![Backend CI](https://github.com/commanderphu/workmate/actions/workflows/ci.yml/badge.svg)](https://github.com/commanderphu/workmate/actions/workflows/ci.yml)
+
 # 🧠 Workmate – The Digital Backoffice by K.I.T. Solutions 
 
 > *„Automatisiere das, was dich aufhält. Lebe das, was dich antreibt.“*  
