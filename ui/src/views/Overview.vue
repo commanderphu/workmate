@@ -122,31 +122,39 @@ type SearchEmp = { id: string; employee_id: string; name?: string | null; depart
 
 async function searchEmployees() {
   const q = addQuery.value.trim()
-  if (!q) { addResults.value = []; return }
+  if (!q) {
+    addResults.value = []
+    activeIndex.value = -1
+    return
+  }
+
   addLoading.value = true
   addError.value = null
+
   try {
-    const rows = await api.searchEmployees(q, 20)
-    addResults.value = (rows || []).map((e: any) => ({
+    // jetzt getypt: Promise<SearchEmp[]>
+    const rows = await api.searchEmployees(q, 10)
+
+    addResults.value = rows.map(e => ({
       id: e.id,
       employee_id: e.employee_id,
-      name: e.name,
-      department: e.department,
-      position: e.position,
-    })) as SearchEmp[]
+      name: e.name ?? null,
+      department: e.department ?? null,
+      position: e.position ?? null,
+    }))
+
     activeIndex.value = addResults.value.length ? 0 : -1
-    nextTick(() => {
-      if (listRef.value && activeIndex.value >= 0) {
-        const el = listRef.value.querySelectorAll('[data-row]')[activeIndex.value] as HTMLElement | undefined
-        el?.scrollIntoView({ block: 'nearest' })
-      }
-    })
+
+    await nextTick()
+    if (listRef.value && activeIndex.value >= 0) {
+      const els = listRef.value.querySelectorAll<HTMLElement>("[data-row]")
+      els[activeIndex.value]?.scrollIntoView({ block: "nearest" })
+    }
   } catch (e: any) {
-    addError.value = e?.message ?? 'Suche fehlgeschlagen.'
+    addError.value = e?.message ?? "Suche fehlgeschlagen."
   } finally {
     addLoading.value = false
   }
-}
 
 
 // Debounce (300 ms)
