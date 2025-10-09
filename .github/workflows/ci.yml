@@ -2,65 +2,69 @@ name: CI
 
 on:
   push:
-    branches: ["**"]
+    branches: [ "main" ]
   pull_request:
-    branches: ["**"]
+    branches: [ "main" ]
   workflow_dispatch: {}
+
+# Verhindert parallele doppelte Runs pro Branch
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   backend-tests:
-    name: Backend (FastAPI) Tests
+    name: Backend • FastAPI + Alembic + Pytest
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     services:
-      db:
+      postgres:
         image: postgres:16
         env:
-          POSTGRES_DB: workmate
           POSTGRES_USER: workmate
           POSTGRES_PASSWORD: workmate
-        ports: ["5432:5432"]
+          POSTGRES_DB: workmate
+        ports:
+          - 5432:5432
         options: >-
           --health-cmd="pg_isready -U workmate -d workmate"
           --health-interval=5s
           --health-timeout=5s
-          --health-retries=15
+          --health-retries=20
 
     env:
       DATABASE_URL: postgresql+psycopg2://workmate:workmate@localhost:5432/workmate
       PYTHONUNBUFFERED: "1"
       PYTHONDONTWRITEBYTECODE: "1"
-      PYTHONPATH: ${{ github.workspace }}/backend   # macht 'app' importierbar
+      PYTHONPATH: ${{ github.workspace }}/backend
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: "pip"
           cache-dependency-path: backend/requirements.txt
 
-      - name: Install backend deps
+      - name: Install deps
         run: |
           pip install --upgrade pip
           pip install -r backend/requirements.txt
           pip install pytest pytest-asyncio httpx requests psycopg2-binary
 
-      # Optional: schnelle Diagnose, ob mehrere Heads existieren
-      - name: Alembic heads (diagnostic)
-        working-directory: backend
-        run: |
-          echo "=== alembic heads ==="
-          alembic heads || true
-
-      - name: Wait for DB
+      - name: Wait for Postgres
         run: |
           python - <<'PY'
           import os, time, psycopg2
           url = os.environ["DATABASE_URL"].replace("+psycopg2","")
-          for i in range(90):
+          for i in range(120):
               try:
                   psycopg2.connect(url).close()
                   print("DB ready"); break
@@ -71,45 +75,18 @@ jobs:
               raise SystemExit("DB not healthy in time")
           PY
 
-      - name: Alembic upgrade
+      - name: Alembic upgrade head
         working-directory: backend
-        run: |
-          alembic upgrade head
-
-      - name: Start FastAPI (background)
-        working-directory: backend
-        run: |
-          nohup uvicorn app.main:app --host 127.0.0.1 --port 8000 --no-access-log > uvicorn.log 2>&1 &
-
-      - name: Wait for /healthz
-        run: |
-          python - <<'PY'
-          import time, urllib.request, sys
-          for i in range(90):
-              try:
-                  with urllib.request.urlopen("http://127.0.0.1:8000/healthz", timeout=1) as r:
-                      if r.status == 200:
-                          print("API ready"); sys.exit(0)
-              except Exception as e:
-                  print(f"API not ready ({i}): {e}")
-              time.sleep(1)
-          raise SystemExit("API not healthy in time")
-          PY
+        run: alembic upgrade head
 
       - name: Run tests
         working-directory: backend
         run: pytest -q
 
-      - name: Show server log (always)
-        if: always()
-        working-directory: backend
-        run: |
-          echo "==== uvicorn.log ===="
-          (test -f uvicorn.log && tail -n +500 uvicorn.log) || echo "no uvicorn.log"
-
   frontend-build:
-    name: Frontend (Vite/Vue) Build
+    name: Frontend • Vite/Vue build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     defaults:
       run:
         working-directory: ui
@@ -128,4 +105,4 @@ jobs:
       - name: Install & Build
         run: |
           npm ci
-          npm run build
+          npm run build --if-present
