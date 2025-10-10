@@ -66,25 +66,48 @@ jobs:
 
       - name: 🔁 Alembic upgrade
         working-directory: backend
+        env:
+          DATABASE_URL: ${{ env.DATABASE_URL }}
         run: alembic upgrade head
+
+      - name: 🚀 Start API (background)
+        working-directory: backend
+        env:
+          DATABASE_URL: ${{ env.DATABASE_URL }}
+        run: |
+          nohup .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 > uvicorn.log 2>&1 &
+          echo $! > uvicorn.pid
+          sleep 1
+
+      - name: ⏳ Wait for readiness
+        run: |
+          for i in {1..60}; do
+            curl -fsS http://127.0.0.1:8000/api/ready && exit 0
+            sleep 1
+          done
+          echo "❌ API not ready on :8000" >&2
+          echo "----- uvicorn.log (tail) -----"
+          sed -n '1,200p' backend/uvicorn.log || true
+          exit 1
 
       - name: 🧪 Pytest
         working-directory: backend
+        env:
+          DATABASE_URL: ${{ env.DATABASE_URL }}
         run: pytest -q
 
-      - name: 🩺 Health smoke
+      - name: 📜 Show API log on failure
+        if: failure()
         working-directory: backend
         run: |
-          .venv/bin/uvicorn app.main:app --port 8000 &
-          for i in {1..30}; do
-            curl -fsS http://localhost:8000/api/health && exit 0
-            sleep 2
-          done
-          echo "❌ Health endpoint not ready" >&2; exit 1
+          echo "----- uvicorn.log (tail) -----"
+          tail -n 200 uvicorn.log || true
 
-      - name: 🧹 Cleanup UVicorn (always)
+      - name: 🧹 Cleanup (always)
         if: always()
-        run: pkill -f "uvicorn" || true
+        run: |
+          if [ -f backend/uvicorn.pid ]; then kill "$(cat backend/uvicorn.pid)" 2>/dev/null || true; fi
+          docker rm -f workmate-db 2>/dev/null || true
 
 
   frontend:

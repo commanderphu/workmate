@@ -33,3 +33,6 @@ backend/logs/
 
 # Ignore local configs
 *.local
+
+tree.txt
+notes-gpt.txt
