@@ -35,6 +35,9 @@ services:
       dockerfile: Dockerfile.dev
     container_name: kit_backend
     env_file: ${ENV_FILE:-.env.dev}
+    environment:
+      - APP_VERSION=${APP_VERSION:-0.1.0}
+      - GIT_SHA=${GIT_SHA:-dev}
     depends_on:
       db:
         condition: service_healthy
@@ -48,6 +51,12 @@ services:
     networks:
       - kit_net
     profiles: ["dev"]
+    healthcheck:
+      test: ["CMD", "curl","-fsS","http://localhost:8000/api/ready"]
+      interval: 20s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
 
   ui:
     build:

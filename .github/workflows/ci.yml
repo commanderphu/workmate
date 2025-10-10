@@ -72,9 +72,19 @@ jobs:
         working-directory: backend
         run: pytest -q
 
-      - name: 🧹 Cleanup DB (always)
+      - name: 🩺 Health smoke
+        working-directory: backend
+        run: |
+          .venv/bin/uvicorn app.main:app --port 8000 &
+          for i in {1..30}; do
+            curl -fsS http://localhost:8000/api/health && exit 0
+            sleep 2
+          done
+          echo "❌ Health endpoint not ready" >&2; exit 1
+
+      - name: 🧹 Cleanup UVicorn (always)
         if: always()
-        run: docker rm -f workmate-db || true
+        run: pkill -f "uvicorn" || true
 
 
   frontend:

@@ -48,6 +48,7 @@
     │   ├── assets
     │   ├── index.html
     │   └── vite.svg
+    ├── Dockerfile
     ├── env.d.ts
     ├── index.html
     ├── node_modules
@@ -232,4 +233,4 @@
     ├── tsconfig.tsbuildinfo
     └── vite.config.ts
 
-186 directories, 47 files
+186 directories, 48 files

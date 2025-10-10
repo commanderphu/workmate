@@ -1,4 +1,6 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import HealthDot from "@/components/HealthDot.vue"
+</script>
 
 <template>
   <div>
@@ -7,6 +9,7 @@
         <div class="h-7 w-7 rounded-lg bg-brand-accent"></div>
         <h1>Workmate Dashboard</h1>
         <nav class="ml-auto flex items-center gap-4 text-sm">
+          <HealthDot class="ml-auto mr-4"/>
           <RouterLink to="/" class="link">Overview</RouterLink>
         </nav>
       </div>

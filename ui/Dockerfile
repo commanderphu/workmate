@@ -1,14 +1,18 @@
+# ui/Dockerfile.dev
 FROM node:20-alpine
+WORKDIR /app
 
-WORKDIR /usr/src/app
+# pnpm aktivieren
+RUN corepack enable
 
-COPY package*.json ./
+# Lockfile & manifest zuerst kopieren -> sauberes layer caching
+COPY pnpm-lock.yaml package.json ./
 
-RUN npm ci 
+# deterministische Installation
+RUN pnpm install --frozen-lockfile
 
+# restlicher Code
 COPY . .
 
-EXPOSE 5173 
-
-CMD ["npm", "run", "dev", "--", "--host"]
-
+EXPOSE 5173
+CMD ["pnpm", "dev", "--host", "0.0.0.0", "--port", "5173"]

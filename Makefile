@@ -7,6 +7,7 @@
 #   make migrate / makemigration MIG_MSG="add email" / alembic-current / alembic-history
 #   make seed SEED_FILE="kit-staff/workmate_employees_basic.json"
 #   make test / fmt / ci / build-be
+#   make health
 
 SHELL := /bin/sh
 
@@ -25,13 +26,44 @@ SEED_FILE ?= kit-staff/workmate_employees_basic.json
 # Internal helper
 CMD = ENV_FILE=$(ENV) $(COMPOSE) --profile $(PROFILE)
 
+# Current short git sha (host)
+SHA := $(shell git rev-parse --short HEAD 2>/dev/null || echo dev)
+
 .PHONY: help
 help: ## Show this help
 	@grep -E '^[a-zA-Z0-9_-]+:.*?##' $(MAKEFILE_LIST) | sed 's/:.*##/: /' | sort
 
+# ---- Metadata helpers ----
+.PHONY: sha
+sha: ## Set GIT_SHA=<short> inside $(ENV)
+	@if [ -f "$(ENV)" ]; then \
+		if grep -q '^GIT_SHA=' "$(ENV)"; then \
+			sed -i 's/^GIT_SHA=.*/GIT_SHA=$(SHA)/' "$(ENV)"; \
+		else \
+			printf "\nGIT_SHA=$(SHA)\n" >> "$(ENV)"; \
+		fi; \
+	else \
+		printf "APP_VERSION=0.1.0\nGIT_SHA=$(SHA)\n" > "$(ENV)"; \
+	fi
+	@echo "GIT_SHA set to $(SHA) in $(ENV)"
+
+.PHONY: set-version
+set-version: ## Set APP_VERSION (use: make set-version VERSION=0.2.0)
+	@test -n "$(VERSION)" || (echo 'Bitte VERSION="x.y.z" setzen' && exit 1)
+	@if [ -f "$(ENV)" ]; then \
+		if grep -q '^APP_VERSION=' "$(ENV)"; then \
+			sed -i 's/^APP_VERSION=.*/APP_VERSION=$(VERSION)/' "$(ENV)"; \
+		else \
+			printf "\nAPP_VERSION=$(VERSION)\n" >> "$(ENV)"; \
+		fi; \
+	else \
+		printf "APP_VERSION=$(VERSION)\nGIT_SHA=$(SHA)\n" > "$(ENV)"; \
+	fi
+	@echo "APP_VERSION set to $(VERSION) in $(ENV)"
+
 # ---- Stack ----
 .PHONY: up
-up: ## Start all services (detached)
+up: sha ## Start all services (detached) after setting GIT_SHA
 	$(CMD) up -d --build
 
 .PHONY: down
@@ -47,7 +79,7 @@ ps: ## Show service status
 	$(CMD) ps
 
 .PHONY: logs
-logs: ## Tail backend logs (use SVC=<name> to override)
+logs: ## Tail logs (use SVC=<name>, default=$(BACKEND_SVC))
 	$(CMD) logs -f $${SVC:-$(BACKEND_SVC)} --tail=100
 
 # ---- Partial starts ----
@@ -124,3 +156,13 @@ ci: ## DB -> migrate -> pytest (quick local CI)
 .PHONY: build-be
 build-be: ## build backend dev image
 	docker build -f backend/Dockerfile.dev -t workmate/backend:dev ./backend
+
+# ---- Convenience ----
+.PHONY: health live ready
+health:
+	@curl -s http://localhost:8000/api/health | jq .
+live:
+	@curl -s http://localhost:8000/api/live | jq .
+ready:
+	@curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8000/api/ready
+
