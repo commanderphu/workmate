@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, cast, String, literal
 from app.database import get_db
 from datetime import datetime, timedelta, timezone, date
 from app import models
@@ -276,7 +276,7 @@ def upcoming_absences(db: Session = Depends(get_db), days: int = 30, limit: int 
             models.Employee.name,
             models.VacationRequest.start_date,
             models.VacationRequest.end_date,
-            func.coalesce(models.VacationRequest.status, "approved").label("status"),
+            func.coalesce(cast(models.VacationRequest.status, String), literal("approved")).label("status"),
         )
         .join(models.Employee, models.Employee.id == models.VacationRequest.employee_id)
         .filter(models.VacationRequest.start_date >= today,

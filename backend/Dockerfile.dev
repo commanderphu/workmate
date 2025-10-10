@@ -3,21 +3,32 @@ FROM python:3.13-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/app
+    PYTHONPATH=/app \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
 WORKDIR /app
 
-# nur für Zertifikate / DNS (leichtgewichtig)
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates \
+# kleine Helfer (TLS + curl für Debug)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates curl tzdata build-essential \
  && rm -rf /var/lib/apt/lists/*
 
-# Dependencies werden gecached, solange requirements.txt unverändert bleibt
-COPY backend/requirements.txt /app/requirements.txt
+# Requirements zuerst (Cache-Layer bleibt stabil)
+COPY requirements.txt /app/requirements.txt
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install --no-cache-dir -r /app/requirements.txt
 
-# App-Code zuletzt (nutzt Layer-Cache optimal aus)
-COPY backend/ /app/
+# Dann App-Code
+COPY . /app/
 
-# Dev-Start (ohne pip, mit autoreload)
-CMD ["sh","-c","alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --no-access-log"]
+# optional: non-root User für saubere Permissions
+RUN useradd -m appuser && chown -R appuser:appuser /app
+USER appuser
+
+EXPOSE 8000
+
+# Start: Migration + autoreload
+CMD ["sh","-c", "\
+  alembic upgrade head && \
+  uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --no-access-log \
+"]

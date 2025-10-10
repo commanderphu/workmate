@@ -1,70 +1,81 @@
+
+
+name: kit_workmate
+
+networks:
+  kit_net:
+
+volumes:
+  pg_data:
+
 services:
   db:
-    image: postgres:16
-    restart: unless-stopped
+    image: postgres:16-alpine
+    container_name: kit_db
+    env_file: ${ENV_FILE:-.env.dev}
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - pg_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -q -h 127.0.0.1 -p 5432 || exit 1"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
-      timeout: 5s
+      timeout: 3s
       retries: 10
-  adminer:
-    image: adminer:latest
-    restart: unless-stopped
-    depends_on:
-      db:
-        condition: service_healthy
-    ports:
-      - "8080:8080"
+    networks:
+      - kit_net
+
   backend:
     build:
-      context: .
-      dockerfile: backend/Dockerfile.dev  
-    working_dir: /app
-    restart: unless-stopped
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: kit_backend
+    env_file: ${ENV_FILE:-.env.dev}
     depends_on:
       db:
         condition: service_healthy
-    environment:
-      DATABASE_URL: ${DATABASE_URL}
-      CORS_ORIGINS: ${CORS_ORIGINS}
-      PYTHONUNBUFFERED: 1
-      PYTHONDONTWRITEBYTECODE: 1
-      PYTHONPATH: /app
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
     volumes:
       - ./backend:/app
-      - ./backend/app/uploads:/app/app/uploads
-    command: ["sh","-c","set -e; pip install --no-cache-dir -r requirements.txt; alembic upgrade head; exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --no-access-log"]
-    ports:
-      - "8000:8000"
-    healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0) if urllib.request.urlopen('http://localhost:8000/healthz').status==200 else sys.exit(1)\""]
-      interval: 5s
-      timeout: 5s
-      retries: 10
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    networks:
+      - kit_net
+    profiles: ["dev"]
 
-  frontend:
-    image: node:20-slim
-    working_dir: /app
-    restart: unless-stopped
+  ui:
+    build:
+      context: ./ui
+      dockerfile: Dockerfile
+    container_name: kit_ui
+    environment:
+      VITE_API_BASE: ${VITE_API_BASE:-http://localhost:8000}
+    ports:
+      - "${FRONTEND_PORT:-5173}:5173"
+    volumes:
+      - ./ui:/usr/src/app
+      - /usr/src/app/node_modules
+    command: ["npm", "run", "dev", "--", "--host"]
     depends_on:
       - backend
-    environment:
-      VITE_API_URL: ${VITE_API_URL}
-    volumes:
-      - ./ui:/app
-    command: sh -c "npm ci && npm run dev -- --host 0.0.0.0 --port 5173"
+    networks:
+      - kit_net
+    profiles: ["dev"]
+
+  adminer:
+    image: adminer
+    container_name: kit_adminer
     ports:
-      - "5173:5173"
-    
-volumes:
-  db_data:
-  
-  
+      - "8081:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - kit_net
+    profiles: ["dev"]
