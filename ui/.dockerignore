@@ -1,2 +1,4 @@
+#  ui/.dockerignore
+
 node_modules
 dist

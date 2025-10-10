@@ -36,7 +36,7 @@ onMounted(async () => {
         'text-white/60': status === 'loading',
       }"
     >
-      {{ status }}
+      {{ status }} - Backend | DB Status
     </span>
   </div>
 </template>
