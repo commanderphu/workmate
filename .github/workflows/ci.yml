@@ -94,7 +94,6 @@ jobs:
     defaults:
       run:
         working-directory: ui
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -103,20 +102,26 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "npm"
-          cache-dependency-path: ui/package-lock.json
+          cache: "pnpm"                       # <-- pnpm statt npm
+          cache-dependency-path: ui/pnpm-lock.yaml
 
-      - name: 📦 Install
-        run: npm ci
+      - name: Enable corepack (pnpm)
+        run: corepack enable
+
+      # optional: pnpm-Version pinnen
+      # - run: corepack prepare pnpm@8.15.8 --activate
+
+      - name: 📦 Install (pnpm)
+        run: pnpm install --frozen-lockfile   # <-- statt npm ci
 
       - name: 🔧 Type Check (optional)
         run: npx vue-tsc --noEmit
 
       - name: 🏗️ Build
-        run: npm run build
+        run: pnpm build
 
       - name: "📦 Artefakt: dist"
-        if: ${{success()}}
+        if: ${{ success() }}
         uses: actions/upload-artifact@v4
         with:
           name: ui-dist
