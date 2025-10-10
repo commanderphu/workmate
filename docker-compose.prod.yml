@@ -1,0 +1,52 @@
+name: kit_workmate_prod
+
+networks:
+  kit_net:
+
+volumes:
+  pg_data:
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: kit_db_prod
+    env_file: ${ENV_FILE:-.env.prod}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-workmate} -d ${POSTGRES_DB:-workmate}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks: [kit_net]
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    container_name: kit_backend_prod
+    env_file: ${ENV_FILE:-.env.prod}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    healthcheck:
+      test: ["CMD","curl","-fsS","http://localhost:8000/api/ready"]
+      interval: 20s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    networks: [kit_net]
+
+  ui:
+    build:
+      context: ./ui
+      dockerfile: Dockerfile.prod
+    container_name: kit_ui_prod
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+    networks: [kit_net]

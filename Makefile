@@ -123,3 +123,10 @@ live: ## GET /api/live
 .PHONY: test
 test: ## run pytest in backend container
 	$(CMD) exec $(BACKEND_SVC) pytest -q || true
+	
+.PHONY: prod-up prod-down
+prod-up: ## Build & start production stack
+	ENV_FILE=.env.prod docker compose -f docker-compose.prod.yml up -d --build
+
+prod-down: ## Stop production stack
+	ENV_FILE=.env.prod docker compose -f docker-compose.prod.yml down
