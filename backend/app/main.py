@@ -10,6 +10,8 @@ app = FastAPI(title="Workmate API", version="0.1.0", description="HR management 
 origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "http://ui.workmate.test:5173",
+    "https://ui.workmate.test"
 ]
 app.add_middleware(
     CORSMiddleware,

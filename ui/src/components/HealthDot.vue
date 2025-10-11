@@ -1,20 +1,40 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue"
+import { ref, onMounted, onBeforeUnmount } from "vue"
 
 type Status = "ok" | "degraded" | "down" | "loading"
 const status = ref<Status>("loading")
+let timer: number | undefined
+let controller: AbortController | undefined
 
-onMounted(async () => {
+async function checkHealth() {
+  const base = ("https://api.workmate.test")
+  const url = `${base}/api/health`
+
+  controller?.abort()
+  controller = new AbortController()
+
   try {
-    const r = await fetch("/api/health", { cache: "no-store" })
-    const j = await r.json()
-    if (j.status === "ok") status.value = "ok"
-    else status.value = "degraded"
-  } catch {
+    const res = await fetch(url, { cache: "no-store", signal: controller.signal, headers: { Accept: "application/json" } })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const j = await res.json()
+    // Mappe „ok/degraded/…“ robust (falls Backend andere Keys liefert)
+    const s = (j.status || j.state || "").toString().toLowerCase()
+    status.value = s === "ok" ? "ok" : s === "degraded" ? "degraded" : "down"
+  } catch (e) {
     status.value = "down"
   }
+}
+
+onMounted(() => {
+  checkHealth()
+  timer = window.setInterval(checkHealth, 15000) // alle 15s
+})
+onBeforeUnmount(() => {
+  if (timer) clearInterval(timer)
+  controller?.abort()
 })
 </script>
+
 
 <template>
   <div class="flex items-center gap-2">

@@ -11,15 +11,14 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
-  server: {
-    host: true,
-    port: 5173,
-    proxy: {
-      '/api': {
-        target: 'http://backend:8000',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/api/, '/api'),
-      },
-    },
-  },
+server: {
+  host: '0.0.0.0',      // erlaubt LAN-Zugriff
+  port: 5173,
+  allowedHosts: [
+    'ui.workmate.test',
+    'workmate.test',
+    'localhost',
+    '127.0.0.1'
+  ],
+},
 })

@@ -1,7 +1,8 @@
 import type { DashboardOverview, TopEmployee, UpcomingAbsence, UpcomingVacation, EmployeeOverview } from "./types"
 
 
-const BASE = import.meta.env.VITE_API_BASE_URL || '/api'
+const BASE = (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
+if (!BASE) console.error("VITE_API_URL fehlt – bitte in ui/.env setzen!");
 
 async function http<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
