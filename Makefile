@@ -161,4 +161,3 @@ https-health: ## Check HTTPS endpoints via Caddy proxy
 https-open: ## Open UI & API in browser
 	@xdg-open "https://$(UI_HOST)" >/dev/null 2>&1 || true
 	@xdg-open "https://$(API_HOST)/docs" >/dev/null 2>&1 || true
-ne 

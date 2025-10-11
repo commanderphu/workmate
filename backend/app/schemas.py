@@ -155,6 +155,12 @@ class SickLeaveOut(SickLeaveBase):
     updated: datetime
     model_config = ConfigDict(from_attributes=True)
 
+class SickLeaveCreateIn(BaseModel):
+    start_date: datetime
+    end_date: datetime
+    document_id: Optional[UUID] = None
+    notes: Optional[str] = None
+    model_config = {"extra": "ignore"}
 # --------------------------
 # Vacation Request Schema
 # --------------------------
@@ -184,6 +190,15 @@ class VacationRequestOut(VacationRequestBase):
     created: datetime
     updated: datetime
     model_config = ConfigDict(from_attributes=True, use_enum_values=True) 
+
+class VacationRequestCreateIn(BaseModel):
+    start_date: date
+    end_date: date
+    reason: Optional[str] = None
+    status: VacationStatus = VacationStatus.pending
+    representative: Optional[str] = None
+    notes: Optional[str] = None
+    model_config = {"extra": "ignore"}  # falls mehr Felder kommen
 
 # --------------------------
 #  Time Entry Schema

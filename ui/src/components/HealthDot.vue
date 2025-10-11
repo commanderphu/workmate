@@ -1,26 +1,28 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from "vue"
+import { apiFetch } from "@/lib/api"
 
 type Status = "ok" | "degraded" | "down" | "loading"
 const status = ref<Status>("loading")
+
 let timer: number | undefined
 let controller: AbortController | undefined
 
 async function checkHealth() {
-  const base = ("https://api.workmate.test")
-  const url = `${base}/api/health`
-
+  // frühere Requests abbrechen
   controller?.abort()
   controller = new AbortController()
 
   try {
-    const res = await fetch(url, { cache: "no-store", signal: controller.signal, headers: { Accept: "application/json" } })
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    const j = await res.json()
-    // Mappe „ok/degraded/…“ robust (falls Backend andere Keys liefert)
-    const s = (j.status || j.state || "").toString().toLowerCase()
+    const res = await apiFetch("/api/health", {
+      cache: "no-store",
+      signal: controller.signal,
+      headers: { Accept: "application/json" },
+    })
+    // res ist bereits JSON (siehe apiFetch)
+    const s = (res?.status || res?.state || "").toString().toLowerCase()
     status.value = s === "ok" ? "ok" : s === "degraded" ? "degraded" : "down"
-  } catch (e) {
+  } catch {
     status.value = "down"
   }
 }
@@ -35,28 +37,21 @@ onBeforeUnmount(() => {
 })
 </script>
 
-
 <template>
-  <div class="flex items-center gap-2">
+  <span
+    :title="status === 'ok' ? 'System OK' : status === 'degraded' ? 'Eingeschränkt' : status === 'down' ? 'Nicht erreichbar' : 'Lade…'"
+    class="inline-flex items-center gap-2"
+  >
     <span
-      class="inline-block h-3 w-3 rounded-full transition-all duration-300 shadow-[0_0_6px_rgba(0,0,0,0.3)]"
-      :class="{
-        'bg-green-400 shadow-green-500/40': status === 'ok',
-        'bg-yellow-400 shadow-yellow-400/40': status === 'degraded',
-        'bg-red-500 shadow-red-500/40': status === 'down',
-        'bg-white/30 animate-pulse': status === 'loading',
-      }"
+      :class="[
+        'inline-block h-2.5 w-2.5 rounded-full',
+        status === 'ok' ? 'bg-emerald-400' :
+        status === 'degraded' ? 'bg-amber-400' :
+        status === 'down' ? 'bg-rose-500' : 'bg-white/40 animate-pulse'
+      ]"
     />
-    <span
-      class="text-xs uppercase tracking-wide font-medium"
-      :class="{
-        'text-green-300': status === 'ok',
-        'text-yellow-300': status === 'degraded',
-        'text-red-400': status === 'down',
-        'text-white/60': status === 'loading',
-      }"
-    >
-      {{ status }} - Backend | DB Status
+    <span class="text-xs text-white/70 capitalize hidden sm:inline">
+      {{ status }}
     </span>
-  </div>
+  </span>
 </template>

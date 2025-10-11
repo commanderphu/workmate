@@ -1,5 +1,5 @@
 from uuid import UUID
-from typing import Optional
+from typing import Optional,List
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import select, and_
@@ -70,3 +70,24 @@ def delete_vacation_request(vr_id: UUID, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="VacationRequest not found")
     db.delete(vr)
     db.commit()
+
+# LIST by_business
+@router.get("/by_business/{employee_id}", response_model=List[schemas.VacationRequestOut])
+def list_vr_by_business(employee_id: str, db: Session = Depends(get_db)):
+    emp = db.query(models.Employee).filter(models.Employee.employee_id == employee_id).first()
+    if not emp: raise HTTPException(404, "Employee not found")
+    return (db.query(models.VacationRequest)
+              .filter(models.VacationRequest.employee_id == emp.id)
+              .order_by(models.VacationRequest.start_date.desc())
+              .all())
+
+# CREATE by_business
+@router.post("/by_business/{employee_id}", response_model=schemas.VacationRequestOut, status_code=201)
+def create_vr_by_business(employee_id: str, payload: schemas.VacationRequestCreateIn, db: Session = Depends(get_db)):
+    emp = db.query(models.Employee).filter(models.Employee.employee_id == employee_id).first()
+    if not emp: raise HTTPException(404, "Employee not found")
+    if payload.end_date < payload.start_date:
+        raise HTTPException(400,"end_date must be >= start_date")
+    vr = models.VacationRequest(employee_id=emp.id, **payload.model_dump())
+    db.add(vr); db.commit(); db.refresh(vr)
+    return vr

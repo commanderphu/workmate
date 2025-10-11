@@ -47,3 +47,31 @@ export interface UpcomingAbsence {
   start_date: string
   end_date: string
 }
+
+// Vacation Requests
+export type VacationRequestStatus = "pending" | "approved" | "rejected" | "taken"
+
+export interface VacationRequest {
+  id: string            // UUID
+  employee_id: string   // UUID
+  start_date: string    // YYYY-MM-DD
+  end_date: string      // YYYY-MM-DD
+  reason?: string | null
+  status: VacationRequestStatus
+  representative?: string | null
+  notes?: string | null
+  created: string       // ISO datetime
+  updated: string       // ISO datetime
+}
+
+// Sick Leaves
+export interface SickLeave {
+  id: string            // UUID
+  employee_id: string   // UUID
+  start_date: string    // ISO datetime
+  end_date: string      // ISO datetime
+  document_id?: string | null
+  notes?: string | null
+  created: string
+  updated: string
+}

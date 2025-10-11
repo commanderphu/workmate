@@ -5,7 +5,10 @@ from .database import SessionLocal, engine, Base
 from fastapi.middleware.cors import CORSMiddleware
 from .routers import register_routers
 
+
 app = FastAPI(title="Workmate API", version="0.1.0", description="HR management system")
+
+
 
 origins = [
     "http://localhost:5173",
