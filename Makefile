@@ -8,6 +8,8 @@
 #   make test / health / ready / live
 #   make seed SEED_FILE="kit-staff/workmate_employees_basic.json"
 #   make https-dev / https-health / https-open
+#	make repair / doctor
+#	make status
 
 SHELL := /bin/sh
 
@@ -161,3 +163,49 @@ https-health: ## Check HTTPS endpoints via Caddy proxy
 https-open: ## Open UI & API in browser
 	@xdg-open "https://$(UI_HOST)" >/dev/null 2>&1 || true
 	@xdg-open "https://$(API_HOST)/docs" >/dev/null 2>&1 || true
+
+# 🩺 Systemdiagnose & Reparatur
+
+.PHONY: doctor repair
+
+doctor: ## Führt den Workmate Dev Setup Check durch
+	@echo "🩺 Starte Workmate Systemdiagnose..."
+	@chmod +x ./dev-setup-check.sh
+	@./dev-setup-check.sh
+
+repair: ## Vollständige Reparatur (Container, Volumes, Images)
+	@echo "🧹 Starte Workmate Komplett-Reparatur..."
+	@chmod +x ./dev-setup-check.sh
+	@./dev-setup-check.sh --repair
+
+# =========================================
+# 🧠 Schnell-Check (Status-only)
+# =========================================
+.PHONY: status
+
+status: ## Zeigt den aktuellen Status aller Workmate-Dienste inkl. API-Health an
+	@echo "──────────────────────────────"
+	@echo "📊 Workmate Service Status"
+	@echo "──────────────────────────────"
+	@SERVICES="kit_db kit_backend kit_ui kit_adminer"; \
+	for SVC in $$SERVICES; do \
+	  if docker ps --format '{{.Names}}:{{.Status}}' | grep -q $$SVC; then \
+	    STATE=$$(docker ps --format '{{.Names}}:{{.Status}}' | grep $$SVC | cut -d: -f2); \
+	    printf "  ✅ %-12s %s\n" $$SVC "$$STATE"; \
+	  else \
+	    printf "  ❌ %-12s %s\n" $$SVC "nicht gefunden / gestoppt"; \
+	  fi; \
+	done; \
+	if systemctl --user is-active --quiet caddy; then \
+	  printf "  ✅ %-12s %s\n" "caddy" "läuft (User-Service)"; \
+	else \
+	  printf "  ❌ %-12s %s\n" "caddy" "gestoppt"; \
+	fi; \
+	echo "──────────────────────────────"; \
+	echo "🌐 API Healthcheck:"; \
+	if curl -sk --max-time 3 https://api.workmate.test/healthz | grep -q '"status":"ok"'; then \
+	  echo "  ✅ API erreichbar (status=ok)"; \
+	else \
+	  echo "  ❌ API nicht erreichbar oder Fehler"; \
+	fi; \
+	echo "──────────────────────────────"
