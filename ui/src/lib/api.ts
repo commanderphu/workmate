@@ -28,6 +28,7 @@ try {
 }
 
 // ------- HTTP Helper -------
+// ------- HTTP Helper -------
 async function http<T>(path: string, init?: RequestInit): Promise<T> {
   const url = new URL(path, BASE)
   const hasBody = !!init?.body
@@ -40,12 +41,34 @@ async function http<T>(path: string, init?: RequestInit): Promise<T> {
       ...(init?.headers || {}),
     },
   })
+
+  // Fehler-Handling
   if (!res.ok) {
-    const text = await res.text().catch(() => "")
+    let text = ""
+    try {
+      text = await res.text()
+    } catch (_) {
+      /* ignore */
+    }
     throw new Error(`${res.status} ${res.statusText}${text ? `: ${text}` : ""}`)
   }
-  const ct = res.headers.get("content-type") || ""
-  return (ct.includes("application/json") ? res.json() : (res.text() as any)) as Promise<T>
+
+  // Robust gegen leere oder nicht-JSON-Antworten
+  const contentType = res.headers.get("content-type") || ""
+  const raw = await res.text()
+
+  if (!raw) return {} as T // leere Antwort (z. B. DELETE 204)
+  if (contentType.includes("application/json")) {
+    try {
+      return JSON.parse(raw) as T
+    } catch (err) {
+      console.warn("⚠️ API parse warning:", err)
+      return {} as T
+    }
+  }
+
+  // Fallback: als Text zurückgeben
+  return raw as any
 }
 
 // ------- Utils -------
