@@ -29,6 +29,8 @@ services:
       - kit_net
 
   backend:
+    user: root
+    privileged: true
     build:
       context: ./backend
       dockerfile: Dockerfile.dev
@@ -43,7 +45,10 @@ services:
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     volumes:
-      - ./backend:/app               # Bind-Mount für Hot-Reload
+      - ./backend/app:/app/backend/app
+      - ./backend/alembic:/app/backend/alembic
+      - ./backend/alembic.ini:/app/backend/alembic.ini
+              # Bind-Mount für Hot-Reload
     command: >
       sh -c "alembic upgrade head &&
              uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips="*" --reload --reload-dir /app"
@@ -62,9 +67,10 @@ services:
       context: ./ui
       dockerfile: Dockerfile.dev     # ← sicherstellen, dass dein UI-Dockerfile.dev corepack/pnpm o. npm enthält
     container_name: kit_ui
+    user: root
+    privileged: true
     environment:
       # Nur den Basis-Pfad ans UI geben, den Proxy macht Vite (target=backend:8000)
-      - VITE_API_BASE=/api
       # File-watcher zuverlässig machen
       - CHOKIDAR_USEPOLLING=1
     ports:
