@@ -4,10 +4,8 @@ from sqlalchemy.orm import Session
 from .database import SessionLocal, engine, Base
 from fastapi.middleware.cors import CORSMiddleware
 from .routers import register_routers
-
-
+from .core.auth import get_current_user
 app = FastAPI(title="Workmate API", version="0.1.0", description="HR management system")
-
 
 
 origins = [
@@ -36,3 +34,7 @@ def healthz():
 @app.get("/", tags=["_infra"])
 def root():
     return {"message": "Workmate API. See /docs for OpenAPI."}
+
+@app.get("/secure", tags=["auth"])
+def secure(user=Depends(get_current_user)):
+    return {"message": f"Hallo {user['preferred_username']}", "email": user.get("email")}

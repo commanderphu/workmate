@@ -7,71 +7,46 @@ import type {
   EmployeeOverview,
 } from "./types"
 
-// ------- Base-URL robust bestimmen (immer HTTPS, kein Port) -------
-const ENV = import.meta.env
-let BASE = (ENV.VITE_API_URL as string | undefined)?.trim()
+import axios from "axios"
+import { getToken } from "./keycloak"
 
+// ===== BASE URL dynamisch bestimmen =====
+let BASE = import.meta.env.VITE_API_URL?.trim()
 if (!BASE) {
-  // Fallback: von der UI-Domain ableiten → api.<host>
   const host = window.location.hostname.replace(/^ui\./, "")
   BASE = `https://api.${host}`
 }
-
 try {
   const u = new URL(BASE)
-  u.protocol = "https:"   // TLS erzwingen
-  u.port = ""             // KEIN :8000 o.ä.
+  u.protocol = "https:"
+  u.port = ""
   BASE = u.toString().replace(/\/+$/, "")
 } catch {
-  console.error("VITE_API_URL ungültig – fallback auf https://api.workmate.test")
+  console.error("⚠️ VITE_API_URL ungültig – fallback auf https://api.workmate.test")
   BASE = "https://api.workmate.test"
 }
 
-// ------- HTTP Helper -------
-// ------- HTTP Helper -------
-async function http<T>(path: string, init?: RequestInit): Promise<T> {
-  const url = new URL(path, BASE)
-  const hasBody = !!init?.body
-  const res = await fetch(url.toString(), {
-    credentials: "include",
-    ...init,
-    headers: {
-      Accept: "application/json",
-      ...(hasBody ? { "Content-Type": "application/json" } : {}),
-      ...(init?.headers || {}),
-    },
-  })
+// ===== AXIOS INSTANZ =====
+export const http = axios.create({
+  baseURL: BASE,
+  withCredentials: false,
+})
 
-  // Fehler-Handling
-  if (!res.ok) {
-    let text = ""
-    try {
-      text = await res.text()
-    } catch (_) {
-      /* ignore */
-    }
-    throw new Error(`${res.status} ${res.statusText}${text ? `: ${text}` : ""}`)
-  }
+// ===== INTERCEPTOR: fügt automatisch das Keycloak-Token hinzu =====
+http.interceptors.request.use((config) => {
+  const token = getToken()
+  if (token) config.headers.Authorization = `Bearer ${token}`
+  return config
+})
 
-  // Robust gegen leere oder nicht-JSON-Antworten
-  const contentType = res.headers.get("content-type") || ""
-  const raw = await res.text()
-
-  if (!raw) return {} as T // leere Antwort (z. B. DELETE 204)
-  if (contentType.includes("application/json")) {
-    try {
-      return JSON.parse(raw) as T
-    } catch (err) {
-      console.warn("⚠️ API parse warning:", err)
-      return {} as T
-    }
-  }
-
-  // Fallback: als Text zurückgeben
-  return raw as any
+// ===== HELFERFUNKTION =====
+function clean<T extends Record<string, any>>(o: T): Partial<T> {
+  return Object.fromEntries(
+    Object.entries(o).filter(([, v]) => v !== undefined && v !== "" && v !== null)
+  ) as Partial<T>
 }
 
-// ------- Utils -------
+// ===== TYPES =====
 export type EmployeeDto = {
   id: string
   employee_id: string
@@ -89,133 +64,65 @@ type ReminderPayload = {
   status?: string
   linked_to?: string | null
 }
-function clean<T extends Record<string, any>>(o: T): Partial<T> {
-  return Object.fromEntries(
-    Object.entries(o).filter(([, v]) => v !== undefined && v !== "" && v !== null),
-  ) as Partial<T>
-}
 
 type VacationRequestPayload = {
-  start_date?: string  // ISO (YYYY-MM-DD)
-  end_date?: string    // ISO (YYYY-MM-DD)
+  start_date?: string
+  end_date?: string
   reason?: string | null
   status?: "pending" | "approved" | "rejected" | "taken"
   representative?: string | null
   notes?: string | null
 }
 
-// ------- API -------
+// ===== API ENDPOINTS =====
 export const api = {
   // Dashboard
-  overview() {
-    return http<DashboardOverview>("/dashboard/overview")
-  },
-  employee(employeeId: string) {
-    return http<EmployeeOverview>(`/dashboard/employee/${encodeURIComponent(employeeId)}`)
-  },
-  topEmployees(limit = 5) {
-    return http<TopEmployee[]>(`/dashboard/reminders/top?limit=${limit}`)
-  },
-  upcomingVacations(days = 30, limit = 20) {
-    return http<UpcomingVacation[]>(`/dashboard/vacations/upcoming?days=${days}&limit=${limit}`)
-  },
-  upcomingAbsences(days = 30, limit = 20) {
-    return http<UpcomingAbsence[]>(`/dashboard/absences/upcoming?days=${days}&limit=${limit}`)
-  },
+  overview: () => http.get<DashboardOverview>("/dashboard/overview").then(r => r.data),
+  employee: (id: string) => http.get<EmployeeOverview>(`/dashboard/employee/${id}`).then(r => r.data),
+  topEmployees: (limit = 5) => http.get<TopEmployee[]>(`/dashboard/reminders/top?limit=${limit}`).then(r => r.data),
+  upcomingVacations: (days = 30, limit = 20) =>
+    http.get<UpcomingVacation[]>(`/dashboard/vacations/upcoming?days=${days}&limit=${limit}`).then(r => r.data),
+  upcomingAbsences: (days = 30, limit = 20) =>
+    http.get<UpcomingAbsence[]>(`/dashboard/absences/upcoming?days=${days}&limit=${limit}`).then(r => r.data),
 
   // Employees
-  updateEmployeeByBusinessId(
-    employeeId: string,
-    data: Partial<{ name: string; role: string; department: string; email: string }>,
-  ) {
-    return http(`/employees/by_business/${encodeURIComponent(employeeId)}`, {
-      method: "PUT",
-      body: JSON.stringify(data),
-    })
-  },
-  searchEmployees(q: string, limit = 20) {
-    const params = new URLSearchParams({ q, limit: String(limit) })
-    return http<EmployeeDto[]>(`/employees?${params.toString()}`)
-  },
-  metaDepartments() {
-    return http<string[]>("/meta/departments")
-  },
-  metaRoles() {
-    return http<string[]>("/meta/roles")
-  },
+  updateEmployeeByBusinessId: (id: string, data: Partial<{ name: string; role: string; department: string; email: string }>) =>
+    http.put(`/employees/by_business/${id}`, clean(data)).then(r => r.data),
+  searchEmployees: (q: string, limit = 20) =>
+    http.get<EmployeeDto[]>(`/employees?q=${q}&limit=${limit}`).then(r => r.data),
+  metaDepartments: () => http.get<string[]>("/meta/departments").then(r => r.data),
+  metaRoles: () => http.get<string[]>("/meta/roles").then(r => r.data),
 
   // Reminders
-  listRemindersByBusiness(employeeId: string) {
-    return http(`/reminders/by_business/${encodeURIComponent(employeeId)}`)
-  },
-  createReminderByBusiness(
-    employeeId: string,
-    data: Required<Pick<ReminderPayload, "title">> & Omit<ReminderPayload, "title">,
-  ) {
-    return http(`/reminders/by_business/${encodeURIComponent(employeeId)}`, {
-      method: "POST",
-      body: JSON.stringify(clean(data)),
-    })
-  },
-  updateReminder(reminderId: string, data: ReminderPayload) {
-    return http(`/reminders/${encodeURIComponent(reminderId)}`, {
-      method: "PATCH",
-      body: JSON.stringify(clean(data)),
-    })
-  },
-  deleteReminder(reminderId: string) {
-    return http(`/reminders/${encodeURIComponent(reminderId)}`, { method: "DELETE" })
-  },
-   // Vacation Requests
-  listVacationRequestsByBusiness(employeeId: string) {
-    return http(`/vacation-requests/by_business/${encodeURIComponent(employeeId)}`)
-  },
-  createVacationRequestByBusiness(employeeId: string, data: VacationRequestPayload) {
-    return http(`/vacation-requests/by_business/${encodeURIComponent(employeeId)}`, {
-      method: "POST",
-      body: JSON.stringify(clean(data)),
-    })
-  },
-  updateVacationRequest(vrId: string, data: VacationRequestPayload) {
-    return http(`/vacation-requests/${encodeURIComponent(vrId)}`, {
-      method: "PUT",
-      body: JSON.stringify(clean(data)),
-    })
-  },
-  deleteVacationRequest(vrId: string) {
-    return http(`/vacation-requests/${encodeURIComponent(vrId)}`, { method: "DELETE" })
-  },
+  listRemindersByBusiness: (id: string) =>
+    http.get(`/reminders/by_business/${id}`).then(r => r.data),
+  createReminderByBusiness: (id: string, data: Required<Pick<ReminderPayload, "title">> & Omit<ReminderPayload, "title">) =>
+    http.post(`/reminders/by_business/${id}`, clean(data)).then(r => r.data),
+  updateReminder: (id: string, data: ReminderPayload) =>
+    http.patch(`/reminders/${id}`, clean(data)).then(r => r.data),
+  deleteReminder: (id: string) =>
+    http.delete(`/reminders/${id}`).then(r => r.data),
 
-  // Sick Leaves (by_business)
-  listSickLeavesByBusiness(employeeId: string) {
-    return http(`/sick-leaves/by_business/${encodeURIComponent(employeeId)}`)
-  },
-  createSickLeaveByBusiness(employeeId: string, data: {
-    start_date?: string // ISO datetime
-    end_date?: string   // ISO datetime
-    document_id?: string | null
-    notes?: string | null
-  }) {
-    return http(`/sick-leaves/by_business/${encodeURIComponent(employeeId)}`, {
-      method: "POST",
-      body: JSON.stringify(clean(data)),
-    })
-  },
-  updateSickLeave(sickId: string, data: {
-    start_date?: string
-    end_date?: string
-    document_id?: string | null
-    notes?: string | null
-  }) {
-    return http(`/sick-leaves/${encodeURIComponent(sickId)}`, {
-      method: "PUT",
-      body: JSON.stringify(clean(data)),
-    })
-  },
-  deleteSickLeave(sickId: string) {
-    return http(`/sick-leaves/${encodeURIComponent(sickId)}`, { method: "DELETE" })
-  },
+  // Vacation Requests
+  listVacationRequestsByBusiness: (id: string) =>
+    http.get(`/vacation-requests/by_business/${id}`).then(r => r.data),
+  createVacationRequestByBusiness: (id: string, data: VacationRequestPayload) =>
+    http.post(`/vacation-requests/by_business/${id}`, clean(data)).then(r => r.data),
+  updateVacationRequest: (id: string, data: VacationRequestPayload) =>
+    http.put(`/vacation-requests/${id}`, clean(data)).then(r => r.data),
+  deleteVacationRequest: (id: string) =>
+    http.delete(`/vacation-requests/${id}`).then(r => r.data),
+
+  // Sick Leaves
+  listSickLeavesByBusiness: (id: string) =>
+    http.get(`/sick-leaves/by_business/${id}`).then(r => r.data),
+  createSickLeaveByBusiness: (id: string, data: any) =>
+    http.post(`/sick-leaves/by_business/${id}`, clean(data)).then(r => r.data),
+  updateSickLeave: (id: string, data: any) =>
+    http.put(`/sick-leaves/${id}`, clean(data)).then(r => r.data),
+  deleteSickLeave: (id: string) =>
+    http.delete(`/sick-leaves/${id}`).then(r => r.data),
 }
 
-// Optional: gezielter Export, falls Komponenten Direktzugriff wollen
+// Optionaler Export für Low-Level-Zugriffe:
 export { http as apiFetch }

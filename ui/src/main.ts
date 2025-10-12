@@ -42,7 +42,17 @@ import App from './App.vue'
 import './index.css'
 import router from './router'
 import './https-guard.dev'
+import { initKeycloak } from './lib/keycloak';
+import { useAuth } from './composables/useAuth';
 
 
 
-createApp(App).use(router).mount('#app')
+const app = createApp(App)
+app.use(router)
+
+initKeycloak(async () => {
+  const auth = useAuth()
+  await auth.initAuth()
+  console.log("🎉 Keycloak + useAuth initialisiert")
+  app.mount("#app")
+})
