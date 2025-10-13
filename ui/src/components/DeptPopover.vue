@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch, nextTick } from 'vue'
+import { ref, onMounted, watch, nextTick, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { api } from '@/lib/api'
 
@@ -51,9 +51,10 @@ function toggle() {
 function close() { open.value = false }
 
 function goTo(eid: string) {
-  router.push({ name: 'employee', params: { employeeId: eid } })
+  router.push({ name: 'employee-detail', params: { employeeId: eid } })
   close()
 }
+
 
 // Bei Dept-Wechsel schließen & neu laden, wenn offen
 watch(() => props.dept, () => { if (open.value) load() })
@@ -61,6 +62,9 @@ watch(() => props.dept, () => { if (open.value) load() })
 // Close bei ESC / außerhalb
 function onKey(e: KeyboardEvent) { if (e.key === 'Escape') close() }
 onMounted(() => window.addEventListener('keydown', onKey))
+onBeforeUnmount(() => window.removeEventListener("keydown", onKey))
+
+router.afterEach(() => close())
 </script>
 
 <template>
@@ -93,7 +97,9 @@ onMounted(() => window.addEventListener('keydown', onKey))
           <div v-if="rows.length === 0" class="p-3 text-white/60 text-sm">Keine Mitarbeiter gefunden.</div>
           <ul v-else class="divide-y divide-white/10">
             <li v-for="e in rows" :key="e.id"
-                class="flex items-center justify-between gap-3 px-3 py-2 hover:bg-white/5">
+                class="flex items-center justify-between gap-3 px-3 py-2 
+                      hover:bg-[#ff9100]/10 transition-colors duration-150 rounded-md">
+
               <div class="min-w-0">
                 <div class="text-white font-medium truncate">
                   {{ e.name || e.employee_id }}

@@ -11,18 +11,24 @@ importers:
       '@heroicons/vue':
         specifier: ^2.2.0
         version: 2.2.0(vue@3.5.22(typescript@5.8.3))
+      blueimp-md5:
+        specifier: ^2.19.0
+        version: 2.19.0
       chart.js:
         specifier: ^4.5.0
-        version: 4.5.0
+        version: 4.5.1
       keycloak-js:
         specifier: ^26.2.1
         version: 26.2.1
+      lucide-vue-next:
+        specifier: ^0.545.0
+        version: 0.545.0(vue@3.5.22(typescript@5.8.3))
       vue:
         specifier: ^3.5.18
         version: 3.5.22(typescript@5.8.3)
       vue-chartjs:
         specifier: ^5.3.2
-        version: 5.3.2(chart.js@4.5.0)(vue@3.5.22(typescript@5.8.3))
+        version: 5.3.2(chart.js@4.5.1)(vue@3.5.22(typescript@5.8.3))
     devDependencies:
       '@types/node':
         specifier: ^24.6.2
@@ -517,6 +523,9 @@ packages:
     resolution: {integrity: sha512-Ceh+7ox5qe7LJuLHoY0feh3pHuUDHAcRUeyL2VYghZwfpkNIy/+8Ocg0a3UuSoYzavmylwuLWQOf3hl0jjMMIw==}
     engines: {node: '>=8'}
 
+  blueimp-md5@2.19.0:
+    resolution: {integrity: sha512-DRQrD6gJyy8FbiE4s+bDoXS9hiW3Vbx5uCdwvcCf3zLHL+Iv7LtGHLpr+GZV8rHG8tK766FGYBwRbu8pELTt+w==}
+
   brace-expansion@2.0.2:
     resolution: {integrity: sha512-Jt0vHyM+jmUBqojB7E1NIYadt0vI0Qxjxd2TErW94wDz+E2LAm5vKMXXwg6ZZBTHPuUlDgQHKXvjGBdfcF1ZDQ==}
 
@@ -540,8 +549,8 @@ packages:
   caniuse-lite@1.0.30001750:
     resolution: {integrity: sha512-cuom0g5sdX6rw00qOoLNSFCJ9/mYIsuSOA+yzpDw8eopiFqcVwQvZHqov0vmEighRxX++cfC0Vg1G+1Iy/mSpQ==}
 
-  chart.js@4.5.0:
-    resolution: {integrity: sha512-aYeC/jDgSEx8SHWZvANYMioYMZ2KX02W6f6uVfyteuCGcadDLcYVHdfdygsTQkQ4TKn5lghoojAsPj5pu0SnvQ==}
+  chart.js@4.5.1:
+    resolution: {integrity: sha512-GIjfiT9dbmHRiYi6Nl2yFCq7kkwdkp1W/lp2J99rX0yo9tgJGn3lKQATztIjb5tVtevcBtIdICNWqlq5+E8/Pw==}
     engines: {pnpm: '>=8'}
 
   chokidar@3.6.0:
@@ -763,6 +772,11 @@ packages:
 
   lru-cache@10.4.3:
     resolution: {integrity: sha512-JNAzZcXrCt42VGLuYz0zfAzDfAvJWW6AfYlDBQyDV5DClI2m5sAmK+OIO7s59XfsRsWHp02jAJrRadPRGTt6SQ==}
+
+  lucide-vue-next@0.545.0:
+    resolution: {integrity: sha512-UXOQYVdJ2dmwkC0jawC9D5efCw/vyogTKvPx7gJ8ZzhrDblcP5oUt44CyMgjX1WJX7gG5XxGdB5FrT/sYM637Q==}
+    peerDependencies:
+      vue: '>=3.0.1'
 
   magic-string@0.30.19:
     resolution: {integrity: sha512-2N21sPY9Ws53PZvsEpVtNuSW+ScYbQdp4b9qUaL+9QkHUrGFKo56Lg9Emg5s9V/qrtNBmiR01sYhUOwu3H+VOw==}
@@ -1451,6 +1465,8 @@ snapshots:
 
   binary-extensions@2.3.0: {}
 
+  blueimp-md5@2.19.0: {}
+
   brace-expansion@2.0.2:
     dependencies:
       balanced-match: 1.0.2
@@ -1476,7 +1492,7 @@ snapshots:
 
   caniuse-lite@1.0.30001750: {}
 
-  chart.js@4.5.0:
+  chart.js@4.5.1:
     dependencies:
       '@kurkle/color': 0.3.4
 
@@ -1708,6 +1724,10 @@ snapshots:
   lines-and-columns@1.2.4: {}
 
   lru-cache@10.4.3: {}
+
+  lucide-vue-next@0.545.0(vue@3.5.22(typescript@5.8.3)):
+    dependencies:
+      vue: 3.5.22(typescript@5.8.3)
 
   magic-string@0.30.19:
     dependencies:
@@ -1982,9 +2002,9 @@ snapshots:
 
   vscode-uri@3.1.0: {}
 
-  vue-chartjs@5.3.2(chart.js@4.5.0)(vue@3.5.22(typescript@5.8.3)):
+  vue-chartjs@5.3.2(chart.js@4.5.1)(vue@3.5.22(typescript@5.8.3)):
     dependencies:
-      chart.js: 4.5.0
+      chart.js: 4.5.1
       vue: 3.5.22(typescript@5.8.3)
 
   vue-router@4.5.1(vue@3.5.22(typescript@5.8.3)):

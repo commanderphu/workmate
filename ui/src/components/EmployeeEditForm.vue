@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, watch, onMounted, ref } from 'vue'
+import { reactive, watch, onMounted, ref, computed } from 'vue'
 import { api } from '@/lib/api'
 
 const props = defineProps<{
@@ -10,13 +10,13 @@ const props = defineProps<{
     department: string
     email: string
   }
+  readonly?: boolean
 }>()
 
-const emit = defineEmits<{
-  (e: 'saved'): void
-}>()
+const isReadonly = computed(() => !!props.readonly)
 
-// Lokale Formkopie (zeigt die initial-Werte an)
+const emit = defineEmits<{ (e: 'saved'): void }>()
+
 const form = reactive({
   name: '',
   role: '',
@@ -24,14 +24,12 @@ const form = reactive({
   email: '',
 })
 
-// Dropdown-Optionen
 const roles = ref<string[]>([])
 const departments = ref<string[]>([])
 const saving = ref(false)
 const saveError = ref<string | null>(null)
 const saveOk = ref(false)
 
-// initial -> form spiegeln (auch bei Hot Navigation)
 function applyInitial() {
   form.name = props.initial?.name ?? ''
   form.role = props.initial?.role ?? ''
@@ -42,20 +40,17 @@ watch(() => props.initial, applyInitial, { immediate: true })
 
 onMounted(async () => {
   try {
-    // Meta-Listen laden
     departments.value = await api.metaDepartments()
     roles.value = await api.metaRoles()
-  } catch {
-    // still ok, Dropdowns bleiben leer
-  }
+  } catch {}
 })
 
 async function save() {
+  if (isReadonly.value) return
   saveOk.value = false
   saveError.value = null
   saving.value = true
   try {
-    // Wir updaten per Business-ID (KIT-0001 etc.)
     await api.updateEmployeeByBusinessId(props.employeeId, {
       name: form.name,
       role: form.role,
@@ -68,11 +63,11 @@ async function save() {
     saveError.value = e?.message ?? 'Speichern fehlgeschlagen.'
   } finally {
     saving.value = false
-    // Erfolgsmeldung nach kurzer Zeit ausblenden (optional)
     setTimeout(() => (saveOk.value = false), 1500)
   }
 }
 </script>
+
 
 <template>
   <div class="rounded-xl border border-white/5 bg-[#1a1d26] p-5 shadow-lg shadow-black/30">
@@ -106,7 +101,7 @@ async function save() {
       </div>
     </div>
 
-    <div class="mt-4 flex items-center gap-3">
+    <div class="mt-4 flex items-center gap-3 " v-if="!isReadonly">
       <button :disabled="saving" @click="save" class="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-black disabled:opacity-60">
         {{ saving ? 'Speichere…' : 'Speichern' }}
       </button>

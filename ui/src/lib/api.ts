@@ -86,6 +86,10 @@ export const api = {
     http.get<UpcomingAbsence[]>(`/dashboard/absences/upcoming?days=${days}&limit=${limit}`).then(r => r.data),
 
   // Employees
+    // --- Employees ---
+  listEmployees: (limit = 100) =>
+    http.get<EmployeeDto[]>(`/employees?limit=${limit}`).then(r => r.data),
+
   updateEmployeeByBusinessId: (id: string, data: Partial<{ name: string; role: string; department: string; email: string }>) =>
     http.put(`/employees/by_business/${id}`, clean(data)).then(r => r.data),
   searchEmployees: (q: string, limit = 20) =>
