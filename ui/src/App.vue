@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import HealthDot from "@/components/HealthDot.vue"
+import UserBar from "@/components/UserBar.vue"
 </script>
 
 <template>
@@ -11,6 +12,7 @@ import HealthDot from "@/components/HealthDot.vue"
         <nav class="ml-auto flex items-center gap-4 text-sm">
           <HealthDot class="ml-auto mr-4"/>
           <RouterLink to="/" class="link">Overview</RouterLink>
+          <UserBar />
         </nav>
       </div>
     </header>

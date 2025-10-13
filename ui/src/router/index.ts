@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Overview from '@/views/Overview.vue'
 import Employee from '@/views/Employee.vue'
+import SetupProfile from '@/views/SetupProfile.vue'
 
 export default createRouter({
   history: createWebHistory(),
@@ -8,5 +9,6 @@ export default createRouter({
     { path: '/', redirect: '/dashboard' },
     { path: '/dashboard', name: 'overview', component: Overview },
     { path: '/dashboard/employee/:employeeId', name: 'employee', component: Employee },
+    {path:"/setup", name: "setup", component: SetupProfile},
   ],
 })
