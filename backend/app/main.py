@@ -6,6 +6,16 @@ from .database import Base, engine
 from .routers import register_routers
 from .core.auth import get_current_user
 
+
+# ====== Basis Verzeichnis =====
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Immer diesen Pfad verwenden – kommt aus Compose
+UPLOAD_DIR = os.getenv("UPLOAD_DIR", "/app/uploads")
+os.makedirs(os.path.join(UPLOAD_DIR, "documents"), exist_ok=True)
+os.makedirs(os.path.join(UPLOAD_DIR, "avatar"), exist_ok=True)
+
+
 # === FastAPI App ===
 app = FastAPI(
     title="Workmate API",
@@ -15,10 +25,15 @@ app = FastAPI(
 
 # === CORS ===
 origins = [
+    # UI / Frontend
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "http://ui.workmate.test:5173",
     "https://ui.workmate.test",
+    
+    # API / Backend
+    "https://api.workmate.test",
+    "http://api.workmate.test",
 ]
 app.add_middleware(
     CORSMiddleware,
@@ -28,13 +43,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# === Upload-Verzeichnisse sicherstellen ===
-os.makedirs("app/uploads/avatar", exist_ok=True)
-
 # === Static Files mounten ===
-# Einheitliche URL-Struktur, egal ob lokal oder hinter Caddy:
-# -> https://api.workmate.test/uploads/avatar/<file>.png
-app.mount("/uploads", StaticFiles(directory="app/uploads"), name="uploads")
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 # === Router registrieren ===
 register_routers(app)

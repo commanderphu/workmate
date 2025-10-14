@@ -4,8 +4,8 @@ from typing import Optional
 from uuid import UUID
 from enum import Enum
 
-from app.models import VacationStatus, ReminderStatus,DocumentStatus
-
+from app.models import VacationStatus, ReminderStatus
+from app.enums import DocumentStatus, DocumentType
 
 ##########################
 # Helper Functions
@@ -34,21 +34,15 @@ def _status_str(v) -> str:
         return str(v)
 
 ##########################
-# Enums
+# CurrentUser
 ##########################
 
+class CurrentUserOut(BaseModel):
+    preferred_username: str
+    email: str
+    employee_id: str
+    department: str
 
-# --------------------------
-# DocumentType Enum
-# --------------------------
-class DocumentType(str, Enum):
-    bewerbung = "bewerbung"
-    krankenkasse = "krankenkasse"
-    urlaub_bescheinigung = "urlaub_bescheinigung"
-    attest = "attest"
-    urlaubsantrag = "urlaubsantrag"
-    fehlzeit = "fehlzeit"
-    sonstige = "sonstige"
 
 
 ##############################
@@ -93,47 +87,70 @@ class EmployeeOut(EmployeeBase):
     updated: datetime
     model_config = ConfigDict(from_attributes=True)
 
-    
+# ============================================================
+# 🧱  Document Base
+# ============================================================
 
-
-# --------------------------
-# Document Schema
-# --------------------------
 class DocumentBase(BaseModel):
-    employee_id: UUID
-    document_type: "DocumentType"
+    """Gemeinsame Felder für Create/Update/Out"""
     title: str
-    file_url: Optional[str] = None
-    is_original_required: bool = False
-    status: DocumentStatus = DocumentStatus.pending
-    upload_date: Optional[datetime] = None
+    document_type: Optional[DocumentType] = None
+    status: Optional[DocumentStatus] = DocumentStatus.pending
     notes: Optional[str] = None
+    is_original_required: Optional[bool] = False
+
+
+# ============================================================
+# 🆕 Create / Update
+# ============================================================
 
 class DocumentCreate(DocumentBase):
-    pass
+    """
+    Wird beim Anlegen eines Dokuments (z. B. Upload) verwendet.
+    employee_id kann eine UUID oder eine KIT-ID (z. B. KIT-0001) sein.
+    """
+    employee_id: str
+    file_url: Optional[str] = None
+    upload_date: Optional[datetime] = None
+
 
 class DocumentUpdate(BaseModel):
-    employee_id: Optional[UUID] = None
-    document_type: Optional[DocumentType] = None
+    """Wird beim Bearbeiten von Metadaten genutzt"""
     title: Optional[str] = None
-    file_url: Optional[str] = None
-    is_original_required: Optional[bool] = None
+    document_type: Optional[DocumentType] = None
     status: Optional[DocumentStatus] = None
+    notes: Optional[str] = None
+    comment: Optional[str] = None
+    is_original_required: Optional[bool] = None
+
+
+
+# ============================================================
+# 📤 Output
+# ============================================================
+
+
+class DocumentOut(BaseModel):
+    id: UUID
+    title: str
+    document_type: Optional[str] = None
+    status: Optional[str] = None
+    file_url: Optional[str] = None
+    is_original_required: bool
     upload_date: Optional[datetime] = None
     notes: Optional[str] = None
+    employee_id: Optional[str] = None
+    employee_name: Optional[str] = None
+    employee_business_id: Optional[str] = None
 
-
-class DocumentOut(DocumentBase):
-    id: UUID
-    created: datetime
-    updated: datetime
-    model_config = ConfigDict(from_attributes=True, use_enum_values=True)
+    class Config:
+        from_attributes = True
 
 # --------------------------
 # Sick Leave Schema
 # --------------------------
 class SickLeaveBase(BaseModel):
-    employee_id: UUID
+    employee_id: str
     start_date: Optional[datetime]
     end_date: Optional[datetime]
     document_id: Optional[UUID] = None
@@ -165,7 +182,7 @@ class SickLeaveCreateIn(BaseModel):
 # Vacation Request Schema
 # --------------------------
 class VacationRequestBase(BaseModel):
-    employee_id: UUID
+    employee_id: str
     start_date: date
     end_date: date
     reason: Optional[str] = None
@@ -205,30 +222,44 @@ class VacationRequestCreateIn(BaseModel):
 # --------------------------
 
 class TimeEntryBase(BaseModel):
-    employee_id: UUID
+    """Basis-Schema (gemeinsame Felder)."""
     start_time: datetime
     end_time: Optional[datetime] = None
     notes: Optional[str] = None
 
+
 class TimeEntryCreate(TimeEntryBase):
+    """Für direkte API-POSTs (z. B. /time-entries/)."""
+    employee_id: str  # KIT-ID oder UUID (abhängig vom Backend)
+
+
+class TimeEntryCreateIn(TimeEntryBase):
+    """Für /by_business/ Endpunkte (employee_id aus URL)."""
     pass
 
+
 class TimeEntryUpdate(BaseModel):
+    """Teilweises Update."""
+    start_time: Optional[datetime] = None
     end_time: Optional[datetime] = None
     notes: Optional[str] = None
 
+
 class TimeEntryOut(TimeEntryBase):
+    """Response-Schema."""
     id: UUID
+    employee_id: str
     created: datetime
     updated: datetime
-    model_config = ConfigDict(from_attributes=True)
 
+    class Config:
+        orm_mode = True
 # --------------------------
 # Reminder Schema
 # --------------------------
 
 class ReminderBase(BaseModel):
-    employee_id: UUID
+    employee_id: str
     title: str = Field(min_length=1, max_length=200)
     description: Optional[str] = None
     due_at: Optional[datetime] = None
@@ -253,7 +284,7 @@ class ReminderUpdate(BaseModel):
 
 class ReminderOut(BaseModel):
     id: UUID
-    employee_id: UUID
+    employee_id: str
     title: str
     description: Optional[str] = None
     due_at: Optional[datetime] = None

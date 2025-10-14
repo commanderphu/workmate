@@ -1,5 +1,5 @@
 // ui/src/composables/useAuth.ts
-import { ref, computed } from "vue"
+import { ref, computed, watchEffect } from "vue"
 import keycloak, { getToken, logout as kcLogout } from "@/lib/keycloak"
 import { api, apiFetch } from "@/lib/api"
 import router from "@/router"
@@ -12,6 +12,26 @@ const dbUser = ref<any>(null)
 export function useAuth() {
   const isAuthenticated = computed(() => !!user.value)
   const isDbLinked = computed(() => !!dbUser.value)
+  /**
+   * User wird nach Rechten/Rollen gefragt
+   * 
+   */
+  const userRole = computed(()=>{
+    const dept=dbUser.value?.department?.toLowerCase()
+    if(dept === "management" ) return "management"
+    if (dept === "hr"|| dept === "backoffice") return "backoffice"
+    return "employee"
+  })
+  const canApprove = computed(()=>{
+    return ["backoffice","management"].includes(userRole.value)
+  })
+  const canManage= computed(()=>{
+    return ["management"].includes(userRole.value)
+    })
+    watchEffect(() => {
+      console.log("🧩 Rolle:", userRole.value, " | canApprove:", canApprove.value)
+      console.log("🧩 Rolle:", userRole.value, " | canManage:", canManage.value)
+    })
 
   /**
    * Initialisiert Authentifizierung + lädt den verknüpften DB-Benutzer
@@ -87,5 +107,8 @@ export function useAuth() {
     initAuth,
     login,
     logout,
+    userRole,
+    canApprove,
+    canManage
   }
 }

@@ -11,10 +11,11 @@ import SickLeaveTable from "@/components/employee/SickLeaveTable.vue"
 import ReminderTable from "@/components/employee/ReminderTable.vue"
 import EmployeeAvatarUpdate from "@/components/employee/EmployeeAvatarUpdate.vue"
 import EmployeeProfileView from "@/components/employee/EmployeeProfileView.vue"
-
+import DocumentTable from "@/components/employee/DocumentTable.vue"
 
 const route = useRoute()
 const router = useRouter()
+
 const employee = ref<any>(null)
 const loading = ref(false)
 const error = ref<string | null>(null)
@@ -25,7 +26,6 @@ const uploading = ref(false)
 const uploadSuccess = ref(false)
 const uploadError = ref<string | null>(null)
 
-
 // 🔹 Tabs Definition
 const tabs = [
   { key: "profile", label: "Profil" },
@@ -33,6 +33,7 @@ const tabs = [
   { key: "vacation", label: "Urlaub" },
   { key: "sick", label: "Krank" },
   { key: "reminders", label: "Erinnerungen" },
+  { key: "documents", label: "Dokumente" },
 ]
 
 // 👇 Avatar Logik mit Fallback
@@ -44,10 +45,10 @@ function updateAvatar(emp: any) {
   const email = emp.email?.trim().toLowerCase()
   const base = email || emp.name || emp.employee_id
   const hash = md5(base)
-  // d=identicon erzeugt automatisch ein generisches farbiges Symbol, wenn kein Gravatar vorhanden ist
   avatarUrl.value = `https://www.gravatar.com/avatar/${hash}?d=identicon&s=160`
   hasError.value = false
 }
+
 async function handleAvatarUpload(file: File) {
   if (!file || !employee.value) return
   uploading.value = true
@@ -62,9 +63,9 @@ async function handleAvatarUpload(file: File) {
     uploadError.value = err.message ?? "Fehler beim Hochladen des Avatars."
   } finally {
     uploading.value = false
-    setTimeout(() => (uploadSuccess.value = false), 3000) // Erfolgsmeldung nach 3 s ausblenden
+    setTimeout(() => (uploadSuccess.value = false), 3000)
   }
-} // 👈 diese Klammer hat gefehlt!
+}
 
 watch(employee, (emp) => updateAvatar(emp), { immediate: true })
 
@@ -83,7 +84,6 @@ async function load() {
     loading.value = false
   }
 }
-
 
 onMounted(load)
 
@@ -111,44 +111,42 @@ const initials = computed(() => {
     <!-- Inhalt -->
     <div v-else-if="employee" class="space-y-6">
       <!-- 🔹 Header -->
-        <header
-          class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-4"
-        >
-          <!-- 🔹 Avatar + Text nebeneinander -->
-          <div class="flex items-center gap-4">
-            <EmployeeAvatarUpdate
-              :email="employee.email"
-              :name="employee.name"
-              :employee-id="employee.employee_id"
-              :avatar-url="employee.avatar_url"
-              @update="handleAvatarUpload"
-            />
+      <header
+        class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-4"
+      >
+        <!-- Avatar + Name -->
+        <div class="flex items-center gap-4">
+          <EmployeeAvatarUpdate
+            :email="employee.email"
+            :name="employee.name"
+            :employee-id="employee.employee_id"
+            :avatar-url="employee.avatar_url"
+            @update="handleAvatarUpload"
+          />
+          <div>
+            <h2 class="text-lg font-semibold text-white">
+              {{ employee.employee_id }} — {{ employee.name }}
+            </h2>
+            <p class="text-sm text-white/60">{{ employee.department }}</p>
+          </div>
+        </div>
 
-            <div>
-              <h2 class="text-lg font-semibold text-white">
-                {{ employee.employee_id }} — {{ employee.name }}
-              </h2>
-              <p class="text-sm text-white/60">{{ employee.department }}</p>
-            </div>
+        <!-- Status + Zurück -->
+        <div class="flex flex-col items-end gap-1 text-sm">
+          <div>
+            <span v-if="uploading" class="text-white/60">📤 Avatar wird hochgeladen…</span>
+            <span v-else-if="uploadSuccess" class="text-[#ff9100]">✅ Avatar aktualisiert!</span>
+            <span v-else-if="uploadError" class="text-red-400">{{ uploadError }}</span>
           </div>
 
-          <!-- 🔹 Status + Zurück-Link -->
-          <div class="flex flex-col items-end gap-1 text-sm">
-            <div>
-              <span v-if="uploading" class="text-white/60">📤 Avatar wird hochgeladen…</span>
-              <span v-else-if="uploadSuccess" class="text-[#ff9100]">✅ Avatar aktualisiert!</span>
-              <span v-else-if="uploadError" class="text-red-400">{{ uploadError }}</span>
-            </div>
-
-            <RouterLink
-              to="/employees"
-              class="text-white/70 hover:text-white transition flex items-center gap-1"
-            >
-              ← Zurück zur Übersicht
-            </RouterLink>
-          </div>
-        </header>
-
+          <RouterLink
+            to="/employees"
+            class="text-white/70 hover:text-white transition flex items-center gap-1"
+          >
+            ← Zurück zur Übersicht
+          </RouterLink>
+        </div>
+      </header>
 
       <!-- 🔹 Tabs -->
       <nav class="flex flex-wrap gap-3 text-sm border-b border-white/5 pb-1">
@@ -168,13 +166,11 @@ const initials = computed(() => {
       </nav>
 
       <!-- 🔹 Tab-Inhalte -->
-      <!-- PROFIL = Ansicht -->
-      <div v-if="activeTab === 'profile'">
+      <Section v-if="activeTab === 'profile'" title="Profilübersicht">
         <EmployeeProfileView :employee="employee" />
-      </div>
+      </Section>
 
-      <!-- EINSTELLUNGEN = Edit-Form -->
-      <div v-else-if="activeTab === 'settings'">
+      <Section v-else-if="activeTab === 'settings'" title="Profil bearbeiten">
         <EmployeeEditForm
           :employee-id="employee.employee_id"
           :initial="{
@@ -184,30 +180,23 @@ const initials = computed(() => {
             email: employee.email || ''
           }"
         />
-      </div>
+      </Section>
 
+      <Section v-else-if="activeTab === 'vacation'" title="Urlaub">
+        <VacationTable :employee-id="employee.employee_id" />
+      </Section>
 
-      <div v-else-if="activeTab === 'vacation'">
-        <Section title="Urlaub">
-          <VacationTable :employee-id="employee.employee_id" />
-        </Section>
-      </div>
+      <Section v-else-if="activeTab === 'sick'" title="Krankmeldungen">
+        <SickLeaveTable :employee-id="employee.employee_id" />
+      </Section>
 
-      <div v-else-if="activeTab === 'sick'">
-        <Section title="Krankmeldungen">
-          <SickLeaveTable :employee-id="employee.employee_id" />
-        </Section>
-      </div>
+      <Section v-else-if="activeTab === 'reminders'" title="Erinnerungen">
+        <ReminderTable :employee-id="employee.employee_id" />
+      </Section>
 
-      <div v-else-if="activeTab === 'reminders'">
-        <Section title="Erinnerungen">
-          <ReminderTable :employee-id="employee.employee_id" />
-        </Section>
-      </div>
-
-      <div v-else-if="activeTab === 'settings'" class="text-white/70">
-        <p class="text-sm">Hier könnten Benutzeroptionen oder Profil-Einstellungen erscheinen.</p>
-      </div>
+      <Section v-else-if="activeTab === 'documents'" title="Dokumente">
+        <DocumentTable :employee-id="employee.employee_id" />
+      </Section>
     </div>
 
     <!-- Fallback -->

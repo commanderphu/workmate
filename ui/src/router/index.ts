@@ -24,6 +24,23 @@ export default createRouter({
       component: () => import("@/views/EmployeeDetail.vue"),
       props: true,
     },
+    {
+      path: "/documents",
+      name: "documents",
+      component: () => import("@/views/Documents.vue"),
+      meta: { title: "Dokumente", requiresAuth: true },
+    },
+    {
+      path: "/admin/audits",
+      name: "AdminAudits",
+      component: () => import("@/views/admin/AuditLogsView.vue"),
+      meta: {
+        requiresAuth: true,
+        requiresManagement: true,
+        title: "Audit Logs",
+      }
+    },
+
 
     // --- Fallback ---
     { path: "/:pathMatch(.*)*", redirect: "/dashboard" },

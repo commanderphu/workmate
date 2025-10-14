@@ -177,7 +177,7 @@ function addQuickFromResult(e: EmpLite) {
         />
         <KpiCard title="Krankmeldungen aktiv" :value="data.sick_leaves.active_now" />
         <KpiCard title="Offene Urlaubsanträge" :value="data.vacations.open_requests" />
-        <KpiCard title="Dokumente" :value="data.documents.total" />
+        <KpiCard title="Dokumente" :value="data.documents.total" @click="router.push({name:'documents'})" />
         <KpiCard title="Aktive Zeitbuchungen" :value="data.time_entries.active_now" />
       </div>
 

@@ -3,18 +3,30 @@ import { useHealth } from "@/composables/useHealth"
 import HealthGroup from "@/components/system/HealthGroup.vue"
 import UserBar from "@/components/UserBar.vue"
 import { useTheme } from "@/composables/useTheme"
-import { ref, onMounted } from "vue"
+import { ref, onMounted, watch} from "vue"
+import { useRoute } from "vue-router"
+import { useAuth } from "@/composables/useAuth"
+const { canManage } = useAuth()
+
+const route = useRoute()
+
+watch(() => route.meta?.title, (title) => {
+  document.title = title ? `Workmate | ${title}` : "Workmate"
+})
 
 const { isDark, toggleTheme } = useTheme()
 
 // 🧠 origin sicher auslesen (nur im Browser)
 const { systems, register } = useHealth()
 
+const apiBase = import.meta.env.VITE_API_URL || window.location.origin
 register([
-  { key: "backend", label: "Backend", url: "https://api.workmate.test/api/health" },
-  { key: "keycloak", label: "Keycloak", url: "https://api.workmate.test/api/keycloak" },
-  { key: "ui", label: "UI", url: "https://api.workmate.test/api/ui" },
+  { key: "backend", label: "Backend", url: `${apiBase}/api/health` },
+  { key: "keycloak", label: "Keycloak", url: `${apiBase}/api/keycloak` },
+  { key: "ui", label: "UI", url: `${apiBase}/api/ui` },
 ])
+
+
 
 </script>
 
@@ -46,9 +58,26 @@ register([
             <span v-if="isDark">☀️</span>
             <span v-else>🌙</span>
           </button>
+              <!-- ✳️ Admin Shortcut -->
+          <RouterLink
+            v-if="canManage"
+            to="/admin/audits"
+            :class="[
+              'hidden md:flex items-center gap-2 px-3 py-2 rounded-lg text-sm border transition-all duration-200',
+              $route.path.startsWith('/admin')
+                ? 'bg-brand-accent text-black font-semibold'
+                : 'bg-brand-accent/10 hover:bg-brand-accent/20 border-white/10 text-brand-accent font-semibold',
+            ]"
+          >
+            <i class="lucide lucide-activity w-4 h-4" />
+            Audits
+          </RouterLink>
 
-          <!-- 💡 Health Indicator -->
-          <HealthGroup v-if="systems.length" :systems="systems" />
+
+
+                <!-- 💡 Health Indicator -->
+          <HealthGroup v-if="systems.length || canManage" :systems="systems" />
+
 
           <!-- 👤 User Menu / Logout -->
           <UserBar />

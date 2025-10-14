@@ -138,6 +138,23 @@ export const api = {
     http.put(`/sick-leaves/${id}`, clean(data)).then(r => r.data),
   deleteSickLeave: (id: string) =>
     http.delete(`/sick-leaves/${id}`).then(r => r.data),
+
+  // Documents
+  uploadDocument: async (employeeId: string, file: File) => {
+  const formData = new FormData()
+  formData.append("file", file)
+  const { data } = await http.post(`/documents/upload/${employeeId}`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  })
+  return data
+},
+
+listDocuments: (employeeId: string) =>
+  http.get(`/documents?employee_id=${employeeId}`).then(r => r.data),
+
+deleteDocument: (id: string) =>
+  http.delete(`/documents/${id}`).then(r => r.data),
+
 }
 
 // Optionaler Export für Low-Level-Zugriffe:

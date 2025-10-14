@@ -7,17 +7,12 @@ import enum
 import uuid
 from typing import Optional
 from .database import Base
-
+from app.enums import DocumentStatus, DocumentType
+from sqlalchemy import Enum as SAEnum
 
 # =========================
 # Enums
 # =========================
-class DocumentStatus(str, enum.Enum):
-    pending   = "pending"
-    received  = "received"
-    processed = "processed"
-
-
 class VacationStatus(str, enum.Enum):
     pending  = "pending"
     approved = "approved"
@@ -35,61 +30,34 @@ class ReminderStatus(str, enum.Enum):
 class Employee(Base):
     __tablename__ = "employees"
 
-    # UUID PK mit Default
-    id: Mapped[uuid.UUID] = mapped_column(
-        PGUUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4
-    )
-
+    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(String(200), nullable=False, index=True)
     email: Mapped[str] = mapped_column(String(320), unique=True, nullable=False, index=True)
-
-    # Externe Personalnummer/Intern-ID (kein FK!)
     employee_id: Mapped[str] = mapped_column(String(64), unique=True, nullable=False, index=True)
 
-    department: Mapped[str | None] = mapped_column(String(120))
-    position: Mapped[str | None] = mapped_column(String(120))
-
-    # Start als Kalendertag
-    start_date: Mapped[date | None] = mapped_column(Date)
-
+    department: Mapped[Optional[str]] = mapped_column(String(120))
+    position: Mapped[Optional[str]] = mapped_column(String(120))
+    start_date: Mapped[Optional[date]] = mapped_column(Date)
     vacation_days_total: Mapped[int] = mapped_column(default=30, nullable=False)
     vacation_days_used:  Mapped[int] = mapped_column(default=0,  nullable=False)
 
-    created: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
-    updated: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
-    )
+    created: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
-    # Beziehungen (nur back_populates, kein backref)
+    avatar_url: Mapped[Optional[str]] = mapped_column(String(255))
+
+    # Beziehungen
     documents = relationship(
-        "Document", back_populates="employee",
-        cascade="all, delete-orphan", passive_deletes=True
+        "Document",
+        primaryjoin="foreign(Document.employee_id) == Employee.employee_id",
+        back_populates="employee",
+        viewonly=True,
     )
-    sick_leaves = relationship(
-        "SickLeave", back_populates="employee",
-        cascade="all, delete-orphan", passive_deletes=True
-    )
-    vacation_requests = relationship(
-        "VacationRequest", back_populates="employee",
-        cascade="all, delete-orphan", passive_deletes=True
-    )
-    reminders = relationship(
-        "Reminder", back_populates="employee",
-        cascade="all, delete-orphan", passive_deletes=True
-    )
-    time_entries = relationship(
-        "TimeEntry", back_populates="employee",
-        cascade="all, delete-orphan", passive_deletes=True
-    )
-    avatar_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    sick_leaves = relationship("SickLeave", back_populates="employee", cascade="all, delete-orphan", passive_deletes=True)
+    vacation_requests = relationship("VacationRequest", back_populates="employee", cascade="all, delete-orphan", passive_deletes=True)
+    reminders = relationship("Reminder", back_populates="employee", cascade="all, delete-orphan", passive_deletes=True)
+    time_entries = relationship("TimeEntry", back_populates="employee", cascade="all, delete-orphan", passive_deletes=True)
 
-    def __repr__(self) -> str:
-        return f"<Employee {self.id} {self.name!r}>"
-
-
-# Optionaler zusammengesetzter Index
 Index("ix_employees_name_department", Employee.name, Employee.department)
 
 
@@ -99,36 +67,30 @@ Index("ix_employees_name_department", Employee.name, Employee.department)
 class Document(Base):
     __tablename__ = "documents"
 
-    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
-
-    employee_id: Mapped[uuid.UUID] = mapped_column(
-        PGUUID(as_uuid=True),
-        ForeignKey("employees.id", ondelete="CASCADE"),
-        nullable=False, index=True
-    )
-
-    document_type: Mapped[str | None] = mapped_column(String(50))
-    title:        Mapped[str] = mapped_column(String(200), nullable=False)
-    file_url:     Mapped[str | None] = mapped_column(Text)
-    is_original_required: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-
+    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    employee_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)  # KIT-0001
+    document_type: Mapped[Optional[DocumentType]] = mapped_column(
+    Enum(DocumentType, name="documenttype", native_enum=False),
+    nullable=True)
+    title: Mapped[str] = mapped_column(String(200), nullable=False)
+    file_url: Mapped[Optional[str]] = mapped_column(String)
+    is_original_required: Mapped[bool] = mapped_column(default=False, nullable=False)
     status: Mapped[DocumentStatus] = mapped_column(
-        Enum(DocumentStatus, name="documentstatus"),
-        default=DocumentStatus.pending, nullable=False
-    )
+    Enum(DocumentStatus, name="documentstatus", native_enum=False),
+    nullable=False,
+    default=DocumentStatus.pending)
+    comment: Mapped[Optional[str]] = mapped_column(String)
+    notes: Mapped[Optional[str]] = mapped_column(String)
+    upload_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    created: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    updated: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=datetime.utcnow)
 
-    upload_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    notes:       Mapped[str | None] = mapped_column(Text)
-
-    created: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
-
-    # Beziehungen
-    employee  = relationship("Employee", back_populates="documents", passive_deletes=True)
+    # 🔗 Beziehung zu Employee (über employee_id, NICHT UUID)
+    employee: Mapped[Optional["Employee"]] = relationship(
+        "Employee",
+        primaryjoin="foreign(Document.employee_id) == Employee.employee_id",
+        back_populates="documents",viewonly=True)
     sick_leave = relationship("SickLeave", back_populates="document", uselist=False)
-
-    def __repr__(self) -> str:
-        return f"<Document {self.id} {self.title!r} employee={self.employee_id}>"
 
 
 # =========================
@@ -138,23 +100,11 @@ class SickLeave(Base):
     __tablename__ = "sick_leaves"
 
     id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
-
-    employee_id: Mapped[uuid.UUID] = mapped_column(
-        PGUUID(as_uuid=True),
-        ForeignKey("employees.id", ondelete="CASCADE"),
-        nullable=False, index=True
-    )
-
+    employee_id: Mapped[str] = mapped_column(String(64), ForeignKey("employees.employee_id", ondelete="CASCADE"), nullable=False, index=True)
+    document_id: Mapped[Optional[uuid.UUID]] = mapped_column(PGUUID(as_uuid=True), ForeignKey("documents.id", ondelete="SET NULL"))
     start_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    end_date:   Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-
-    document_id: Mapped[uuid.UUID | None] = mapped_column(
-        PGUUID(as_uuid=True),
-        ForeignKey("documents.id", ondelete="SET NULL"),
-        nullable=True, index=True
-    )
-
-    notes:   Mapped[str | None] = mapped_column(Text)
+    end_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    notes: Mapped[Optional[str]] = mapped_column(Text)
     created: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
@@ -169,24 +119,13 @@ class VacationRequest(Base):
     __tablename__ = "vacation_requests"
 
     id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
-
-    employee_id: Mapped[uuid.UUID] = mapped_column(
-        PGUUID(as_uuid=True),
-        ForeignKey("employees.id", ondelete="CASCADE"),
-        nullable=False, index=True
-    )
-
+    employee_id: Mapped[str] = mapped_column(String(64), ForeignKey("employees.employee_id", ondelete="CASCADE"), nullable=False, index=True)
     start_date: Mapped[date] = mapped_column(Date, nullable=False)
-    end_date:   Mapped[date] = mapped_column(Date, nullable=False)
-
-    reason: Mapped[str | None] = mapped_column(Text)
-    status: Mapped[VacationStatus] = mapped_column(
-        Enum(VacationStatus, name="vacationstatus"),
-        default=VacationStatus.pending, nullable=False
-    )
-    representative: Mapped[str | None] = mapped_column(String)
-    notes:          Mapped[str | None] = mapped_column(Text)
-
+    end_date: Mapped[date] = mapped_column(Date, nullable=False)
+    reason: Mapped[Optional[str]] = mapped_column(Text)
+    status: Mapped[VacationStatus] = mapped_column(Enum(VacationStatus, name="vacationstatus"), default=VacationStatus.pending, nullable=False)
+    representative: Mapped[Optional[str]] = mapped_column(String)
+    notes: Mapped[Optional[str]] = mapped_column(Text)
     created: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
@@ -200,17 +139,10 @@ class TimeEntry(Base):
     __tablename__ = "time_entries"
 
     id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
-
-    employee_id: Mapped[uuid.UUID] = mapped_column(
-        PGUUID(as_uuid=True),
-        ForeignKey("employees.id", ondelete="CASCADE"),
-        nullable=False, index=True
-    )
-
+    employee_id: Mapped[str] = mapped_column(String(64), ForeignKey("employees.employee_id", ondelete="CASCADE"), nullable=False, index=True)
     start_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    end_time:   Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    notes:      Mapped[str | None] = mapped_column(Text)
-
+    end_time: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    notes: Mapped[Optional[str]] = mapped_column(Text)
     created: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
@@ -223,34 +155,27 @@ class TimeEntry(Base):
 class Reminder(Base):
     __tablename__ = "reminders"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        PGUUID(as_uuid=True),
-        primary_key=True,
-        index=True,
-        default=uuid.uuid4,
-    )
-
-    employee_id: Mapped[uuid.UUID] = mapped_column(
-        PGUUID(as_uuid=True),
-        ForeignKey("employees.id", ondelete="CASCADE"),
-        nullable=False,
-        index=True,
-    )
-
-    # payload
+    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
+    employee_id: Mapped[str] = mapped_column(String(64), ForeignKey("employees.employee_id", ondelete="CASCADE"), nullable=False, index=True)
     title: Mapped[str] = mapped_column(Text, nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text)
-    due_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=False), index=True)
-    reminder_time: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=False))
-    status: Mapped[Optional[str]] = mapped_column(Text, default="pending")
+    due_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    reminder_time: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    status: Mapped[str] = mapped_column(Text, default="pending")
     linked_to: Mapped[Optional[str]] = mapped_column(Text)
+    created: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
-    # meta
-    created: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
-    updated: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
-    )
     employee = relationship("Employee", back_populates="reminders", passive_deletes=True)
-    # relations
+
+# app/models.py
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+
+    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_email: Mapped[str] = mapped_column(String(200))
+    role: Mapped[str] = mapped_column(String(50))
+    action: Mapped[str] = mapped_column(String(200))
+    resource: Mapped[str] = mapped_column(String(200))
+    details: Mapped[Optional[str]] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

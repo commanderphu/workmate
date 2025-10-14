@@ -13,16 +13,15 @@ from app import models, schemas
 from app.database import get_db
 from app.core.auth import get_current_user
 
-
 router = APIRouter(prefix="/employees", tags=["Employees"])
 
 AVATAR_DIR = Path("app/uploads/avatar")
 AVATAR_DIR.mkdir(parents=True, exist_ok=True)
 
 
-@router.get("/me", response_model=schemas.EmployeeOut)
-def get_me(current_user: models.Employee = Depends(get_current_user)):
-    return current_user
+@router.get("/me", response_model=schemas.CurrentUserOut)
+def get_me(user=Depends(get_current_user)):
+    return user
 
 
 @router.get("/", response_model=List[schemas.EmployeeOut])

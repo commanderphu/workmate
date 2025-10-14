@@ -39,6 +39,8 @@ services:
     environment:
       - APP_VERSION=${APP_VERSION:-0.1.0}
       - GIT_SHA=${GIT_SHA:-dev}
+      - BACKEND_URL=https://api.workmate.test
+      - UPLOAD_DIR=/app/uploads
     depends_on:
       db:
         condition: service_healthy
@@ -46,6 +48,7 @@ services:
       - "${BACKEND_PORT:-8000}:8000"
     volumes:
       - ./backend/app:/app/backend/app
+      - ./backend/uploads:/app/uploads
       - ./backend/alembic:/app/backend/alembic
       - ./backend/alembic.ini:/app/backend/alembic.ini
               # Bind-Mount für Hot-Reload
