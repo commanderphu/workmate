@@ -185,7 +185,8 @@ def get_employee_dashboard(employee_id: str, db: Session = Depends(get_db)):
             "employee_id": emp.employee_id,
             "name": emp.name,
             "department": emp.department,
-            "email": emp.email
+            "email": emp.email,
+            "position": emp.position
         },
         "documents": {"total": total_documents},
         "sick_leave": {"active_now": current_sick_leave is not None},

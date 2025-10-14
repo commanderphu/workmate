@@ -1,9 +1,21 @@
 <script setup lang="ts">
-import HealthDot from "@/components/HealthDot.vue"
+import { useHealth } from "@/composables/useHealth"
+import HealthGroup from "@/components/system/HealthGroup.vue"
 import UserBar from "@/components/UserBar.vue"
 import { useTheme } from "@/composables/useTheme"
+import { ref, onMounted } from "vue"
 
 const { isDark, toggleTheme } = useTheme()
+
+// 🧠 origin sicher auslesen (nur im Browser)
+const { systems, register } = useHealth()
+
+register([
+  { key: "backend", label: "Backend", url: "https://api.workmate.test/api/health" },
+  { key: "keycloak", label: "Keycloak", url: "https://api.workmate.test/api/keycloak" },
+  { key: "ui", label: "UI", url: "https://api.workmate.test/api/ui" },
+])
+
 </script>
 
 <template>
@@ -12,15 +24,16 @@ const { isDark, toggleTheme } = useTheme()
       class="sticky top-0 z-10 backdrop-blur bg-white/80 dark:bg-brand-bg/90 
          border-b border-black/5 dark:border-white/5 
          shadow-[0_0_20px_rgba(255,145,0,0.2)]"
-        >
-          <div class="container-page flex items-center justify-between py-5">
-            <RouterLink to="/" class="flex items-center gap-3 select-none">
-              <img
-                :src="isDark ? '/workmate_dark_transparent.png' : '/workmate_white_transparent.png'"
-                alt="Workmate Logo"
-                class="h-20 w-auto drop-shadow-[0_0_20px_rgba(255,145,0,0.7)] transition-all duration-300 select-none"
-              />
-            </RouterLink>
+    >
+      <div class="container-page flex items-center justify-between py-5">
+        <!-- 🔹 Logo -->
+        <RouterLink to="/" class="flex items-center gap-3 select-none">
+          <img
+            :src="isDark ? '/workmate_dark_transparent.png' : '/workmate_white_transparent.png'"
+            alt="Workmate Logo"
+            class="h-20 w-auto drop-shadow-[0_0_20px_rgba(255,145,0,0.7)] transition-all duration-300 select-none"
+          />
+        </RouterLink>
 
         <!-- 🔧 Right Side (Theme + Status + User) -->
         <div class="flex items-center gap-5">
@@ -35,7 +48,7 @@ const { isDark, toggleTheme } = useTheme()
           </button>
 
           <!-- 💡 Health Indicator -->
-          <HealthDot class="mr-2" />
+          <HealthGroup v-if="systems.length" :systems="systems" />
 
           <!-- 👤 User Menu / Logout -->
           <UserBar />

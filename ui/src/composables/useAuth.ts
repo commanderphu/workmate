@@ -41,7 +41,7 @@ export function useAuth() {
       const currentPath = window.location.pathname
       console.log(currentPath)
       if (currentPath === "/" && dbUser.value?.employee_id) {
-        console.log("➡️ Redirect von / auf Dashboard:", dbUser.value.employee_id)
+      console.log("➡️ Redirect von / auf Dashboard:", dbUser.value.employee_id)
         await router.replace(`/dashboard/employee/${dbUser.value.employee_id}`)
       }
     } catch (err: any) {
@@ -53,9 +53,9 @@ export function useAuth() {
     // 🔹 Kein DB-User vorhanden → Setup-Seite
     // ------------------------------------------------------------
     if (!dbUser.value) {
-      console.log("➡️ Kein Eintrag in der DB -> Redirect to /setup")
-      router.push("/setup")
-    }
+     console.log("➡️ Kein Eintrag in der DB -> Redirect to /setup")
+     router.push("/setup")
+   }
   }
 
   /**

@@ -4,6 +4,8 @@ from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from app.database import get_db
+import httpx
+import asyncio
 
 router = APIRouter(prefix="/api", tags=["health"])
 
@@ -42,3 +44,47 @@ def health(db: Session = Depends(get_db)):
         status_flag = "degraded"
         details["database"] = f"error:{type(e).__name__}"
     return {"status": status_flag, "details": details}
+
+@router.get("/keycloak")
+async def health_keycloak():
+    """Prüft, ob Keycloak erreichbar ist und liefert Status + Details zurück."""
+    url = "http://keycloak:8080/realms/master"
+    try:
+        async with httpx.AsyncClient(timeout=5.0, verify=False) as client:
+            r = await client.get(url)
+            if r.status_code == 200:
+                return {"status": "ok", "code": 200, "url": url}
+            return {
+                "status": "down",
+                "code": r.status_code,
+                "reason": r.reason_phrase,
+                "url": url,
+            }
+    except httpx.ConnectError as e:
+        return {"status": "down", "error": f"ConnectError: {str(e)}", "url": url}
+    except httpx.ReadTimeout:
+        return {"status": "down", "error": "Timeout (no response)", "url": url}
+    except Exception as e:
+        return {"status": "down", "error": f"{type(e).__name__}: {str(e)}", "url": url}
+
+@router.get("/ui")
+async def health_ui():
+    """Prüft, ob die Workmate UI erreichbar ist."""
+    url = "https://ui.workmate.test/healthz"
+    try:
+        async with httpx.AsyncClient(timeout=5.0, verify=False) as client:
+            r = await client.get(url)
+            if r.status_code == 200:
+                return {"status": "ok", "code": 200, "url": url}
+            return {
+                "status": "down",
+                "code": r.status_code,
+                "reason": r.reason_phrase,
+                "url": url,
+            }
+    except httpx.ConnectError as e:
+        return {"status": "down", "error": f"ConnectError: {str(e)}", "url": url}
+    except httpx.ReadTimeout:
+        return {"status": "down", "error": "Timeout (no response)", "url": url}
+    except Exception as e:
+        return {"status": "down", "error": f"{type(e).__name__}: {str(e)}", "url": url}

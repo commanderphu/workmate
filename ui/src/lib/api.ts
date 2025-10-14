@@ -96,6 +96,18 @@ export const api = {
     http.get<EmployeeDto[]>(`/employees?q=${q}&limit=${limit}`).then(r => r.data),
   metaDepartments: () => http.get<string[]>("/meta/departments").then(r => r.data),
   metaRoles: () => http.get<string[]>("/meta/roles").then(r => r.data),
+  // --- Avatar Upload ---
+  uploadAvatar: async (employeeId: string, file: File) => {
+    const formData = new FormData()
+    formData.append("file", file)
+
+    const { data } = await http.post(`/employees/upload-avatar/${employeeId}`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    })
+    return data
+  },
+
+
 
   // Reminders
   listRemindersByBusiness: (id: string) =>

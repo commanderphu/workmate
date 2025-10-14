@@ -1,18 +1,24 @@
+import os
 from fastapi import FastAPI, Depends
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy.orm import Session
-from .database import SessionLocal, engine, Base
 from fastapi.middleware.cors import CORSMiddleware
+from .database import Base, engine
 from .routers import register_routers
 from .core.auth import get_current_user
-app = FastAPI(title="Workmate API", version="0.1.0", description="HR management system")
 
+# === FastAPI App ===
+app = FastAPI(
+    title="Workmate API",
+    version="0.1.0",
+    description="HR management system",
+)
 
+# === CORS ===
 origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "http://ui.workmate.test:5173",
-    "https://ui.workmate.test"
+    "https://ui.workmate.test",
 ]
 app.add_middleware(
     CORSMiddleware,
@@ -22,12 +28,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount("/app/uploads", StaticFiles(directory="app/uploads"), name="uploads")
-# Base.metadata.create_all(bind=engine)
+# === Upload-Verzeichnisse sicherstellen ===
+os.makedirs("app/uploads/avatar", exist_ok=True)
 
+# === Static Files mounten ===
+# Einheitliche URL-Struktur, egal ob lokal oder hinter Caddy:
+# -> https://api.workmate.test/uploads/avatar/<file>.png
+app.mount("/uploads", StaticFiles(directory="app/uploads"), name="uploads")
+
+# === Router registrieren ===
 register_routers(app)
 
-@app.get ("/healthz", tags=["_infra"])
+# === System-Endpunkte ===
+@app.get("/healthz", tags=["_infra"])
 def healthz():
     return {"status": "ok"}
 
@@ -37,4 +50,7 @@ def root():
 
 @app.get("/secure", tags=["auth"])
 def secure(user=Depends(get_current_user)):
-    return {"message": f"Hallo {user['preferred_username']}", "email": user.get("email")}
+    return {
+        "message": f"Hallo {user['preferred_username']}",
+        "email": user.get("email"),
+    }

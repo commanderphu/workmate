@@ -9,6 +9,9 @@ import EmployeeEditForm from "@/components/EmployeeEditForm.vue"
 import VacationTable from "@/components/employee/VacationTable.vue"
 import SickLeaveTable from "@/components/employee/SickLeaveTable.vue"
 import ReminderTable from "@/components/employee/ReminderTable.vue"
+import EmployeeAvatarUpdate from "@/components/employee/EmployeeAvatarUpdate.vue"
+import EmployeeProfileView from "@/components/employee/EmployeeProfileView.vue"
+
 
 const route = useRoute()
 const router = useRouter()
@@ -17,6 +20,11 @@ const loading = ref(false)
 const error = ref<string | null>(null)
 
 const activeTab = ref("profile")
+
+const uploading = ref(false)
+const uploadSuccess = ref(false)
+const uploadError = ref<string | null>(null)
+
 
 // 🔹 Tabs Definition
 const tabs = [
@@ -40,6 +48,23 @@ function updateAvatar(emp: any) {
   avatarUrl.value = `https://www.gravatar.com/avatar/${hash}?d=identicon&s=160`
   hasError.value = false
 }
+async function handleAvatarUpload(file: File) {
+  if (!file || !employee.value) return
+  uploading.value = true
+  uploadError.value = null
+  uploadSuccess.value = false
+
+  try {
+    const res = await api.uploadAvatar(employee.value.employee_id, file)
+    employee.value.avatar_url = res.avatar_url
+    uploadSuccess.value = true
+  } catch (err: any) {
+    uploadError.value = err.message ?? "Fehler beim Hochladen des Avatars."
+  } finally {
+    uploading.value = false
+    setTimeout(() => (uploadSuccess.value = false), 3000) // Erfolgsmeldung nach 3 s ausblenden
+  }
+} // 👈 diese Klammer hat gefehlt!
 
 watch(employee, (emp) => updateAvatar(emp), { immediate: true })
 
@@ -86,38 +111,44 @@ const initials = computed(() => {
     <!-- Inhalt -->
     <div v-else-if="employee" class="space-y-6">
       <!-- 🔹 Header -->
-      <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-4">
-        <div class="flex items-center gap-3 mb-3">
-          <!-- Avatar mit Fallback -->
-          <img
-            v-if="!hasError && avatarUrl"
-            :src="avatarUrl"
-            @error="hasError = true"
-            alt="Avatar"
-            class="w-16 h-16 rounded-full border border-white/10 shadow-md shadow-black/40"
-          />
-          <div
-            v-else
-            class="w-16 h-16 rounded-full bg-[#ff9100]/20 text-[#ff9100] font-bold grid place-items-center"
-          >
-            {{ initials }}
-          </div>
-
-          <div>
-            <h2 class="text-lg font-semibold text-white">
-              {{ employee?.employee_id }} — {{ employee?.name }}
-            </h2>
-            <p class="text-sm text-white/60">{{ employee?.department }}</p>
-          </div>
-        </div>
-
-        <RouterLink
-          to="/employees"
-          class="text-sm text-white/70 hover:text-white transition flex items-center gap-1"
+        <header
+          class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-4"
         >
-          ← Zurück zur Übersicht
-        </RouterLink>
-      </header>
+          <!-- 🔹 Avatar + Text nebeneinander -->
+          <div class="flex items-center gap-4">
+            <EmployeeAvatarUpdate
+              :email="employee.email"
+              :name="employee.name"
+              :employee-id="employee.employee_id"
+              :avatar-url="employee.avatar_url"
+              @update="handleAvatarUpload"
+            />
+
+            <div>
+              <h2 class="text-lg font-semibold text-white">
+                {{ employee.employee_id }} — {{ employee.name }}
+              </h2>
+              <p class="text-sm text-white/60">{{ employee.department }}</p>
+            </div>
+          </div>
+
+          <!-- 🔹 Status + Zurück-Link -->
+          <div class="flex flex-col items-end gap-1 text-sm">
+            <div>
+              <span v-if="uploading" class="text-white/60">📤 Avatar wird hochgeladen…</span>
+              <span v-else-if="uploadSuccess" class="text-[#ff9100]">✅ Avatar aktualisiert!</span>
+              <span v-else-if="uploadError" class="text-red-400">{{ uploadError }}</span>
+            </div>
+
+            <RouterLink
+              to="/employees"
+              class="text-white/70 hover:text-white transition flex items-center gap-1"
+            >
+              ← Zurück zur Übersicht
+            </RouterLink>
+          </div>
+        </header>
+
 
       <!-- 🔹 Tabs -->
       <nav class="flex flex-wrap gap-3 text-sm border-b border-white/5 pb-1">
@@ -137,7 +168,13 @@ const initials = computed(() => {
       </nav>
 
       <!-- 🔹 Tab-Inhalte -->
+      <!-- PROFIL = Ansicht -->
       <div v-if="activeTab === 'profile'">
+        <EmployeeProfileView :employee="employee" />
+      </div>
+
+      <!-- EINSTELLUNGEN = Edit-Form -->
+      <div v-else-if="activeTab === 'settings'">
         <EmployeeEditForm
           :employee-id="employee.employee_id"
           :initial="{
@@ -148,6 +185,7 @@ const initials = computed(() => {
           }"
         />
       </div>
+
 
       <div v-else-if="activeTab === 'vacation'">
         <Section title="Urlaub">

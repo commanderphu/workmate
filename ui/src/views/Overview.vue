@@ -26,11 +26,16 @@ const hasDeptData = computed(() =>
 // Laden
 onMounted(async () => {
   try {
-    data.value = await api.overview()
+    console.log("📡 Lade Overview…")
+    const res = await api.overview()
+    console.log("✅ API Response:", res)
+    data.value = res
   } catch (e: any) {
+    console.error("❌ Fehler beim Laden:", e)
     err.value = e?.message ?? "Laden der Übersicht fehlgeschlagen."
   }
 })
+
 
 // -------------------- Schnellzugriff --------------------
 const quickLinks = ref<string[]>([])
@@ -158,7 +163,7 @@ function addQuickFromResult(e: EmpLite) {
     <div v-else>
       <!-- KPIs -->
       <div class="mt-2 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard title="Mitarbeiter" :value="data.employees.total" />
+        <KpiCard title="Mitarbeiter" :value="data.employees.total" @click="router.push({name: 'employees'})" />
         <KpiCard
           title="Reminders"
           :value="data.reminders.pending_total"

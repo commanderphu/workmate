@@ -1,19 +1,23 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, cast
 from uuid import UUID, uuid4
+import uuid
 
-from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi import APIRouter, HTTPException, Depends, Query, UploadFile,File
 from sqlalchemy.orm import Session
 from sqlalchemy import Column, func
 from sqlalchemy.exc import IntegrityError
-
-
+from pathlib import Path
+import shutil
 from app import models, schemas
 from app.database import get_db
 from app.core.auth import get_current_user
 
 
 router = APIRouter(prefix="/employees", tags=["Employees"])
+
+AVATAR_DIR = Path("app/uploads/avatar")
+AVATAR_DIR.mkdir(parents=True, exist_ok=True)
 
 
 @router.get("/me", response_model=schemas.EmployeeOut)
@@ -164,5 +168,52 @@ def update_employee_by_business_id(
         db.rollback()
         # Falls doch ein anderer Unique-Fehler kommt (z.B. employee_id)
         raise HTTPException(status_code=409, detail="Unique constraint violation") from e
+
+    return emp
+
+@router.post("/upload-avatar/{employee_id}", response_model=schemas.EmployeeOut)
+async def upload_employee_avatar(
+    employee_id: str,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    """
+    📸 Lädt ein Profilbild für den Mitarbeiter hoch.
+    - akzeptiert nur Bilddateien
+    - speichert Datei unter app/uploads/avatar/
+    - aktualisiert avatar_url in der Datenbank
+    """
+    # 1️⃣ Datei-Typ prüfen
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Nur Bilddateien sind erlaubt.")
+
+    # 2️⃣ Mitarbeiter anhand Business-ID finden
+    emp = db.query(models.Employee).filter(models.Employee.employee_id == employee_id).first()
+    if emp is None:
+        raise HTTPException(status_code=404, detail="Mitarbeiter nicht gefunden.")
+
+    # 3️⃣ Alte Datei löschen (wenn vorhanden)
+    if emp.avatar_url:
+        avatar_str: str = cast(str, emp.avatar_url)  # Typ explizit casten
+        old_path = Path("app") / avatar_str.lstrip("/")
+        if old_path.exists():
+            try:
+                old_path.unlink()
+            except Exception:
+                pass
+
+    # 4️⃣ Neue Datei eindeutig benennen (UUID + Originalendung)
+    ext = Path(file.filename or "").suffix or ".png"
+    filename = f"{uuid.uuid4()}{ext}"
+    save_path = AVATAR_DIR / filename
+
+    # 5️⃣ Datei speichern
+    with open(save_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    # 6️⃣ URL im Datensatz aktualisieren
+    emp.avatar_url = f"/uploads/avatar/{filename}"
+    db.commit()
+    db.refresh(emp)
 
     return emp

@@ -1,22 +1,25 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from "vue"
+import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue"
 import { useAuth } from "@/composables/useAuth"
-import { LogOut, User as UserIcon } from "lucide-vue-next" // 🔸 Icons installieren: npm i lucide-vue-next
+import { LogOut } from "lucide-vue-next"
+import { getAvatar } from "@/lib/avatar"
 
 const { user, dbUser, isAuthenticated, logout } = useAuth()
+
 const open = ref(false)
+const avatarUrl = ref<string | null>(null)
+const initials = ref("?")
+const hasError = ref(false)
 
-const initials = computed(() => {
-  const name = user.value?.name || user.value?.preferred_username
-  if (!name) return "?"
-  return name
-    .split(" ")
-    .map((n: string) => n[0])
-    .join("")
-    .toUpperCase()
-})
+// 🔁 Reagiere auf Änderungen an dbUser oder user
+watch([dbUser, user], ([db, kc]) => {
+  const { url, initials: init } = getAvatar(db || kc)
+  avatarUrl.value = url
+  initials.value = init
+  hasError.value = false
+}, { immediate: true })
 
-// Klick außerhalb -> Dropdown schließen
+// Klick außerhalb schließt Dropdown
 const onClickOutside = (e: MouseEvent) => {
   const target = e.target as HTMLElement
   if (!target.closest(".userbar")) open.value = false
@@ -39,21 +42,37 @@ onBeforeUnmount(() => window.removeEventListener("click", onClickOutside))
 </style>
 
 <template>
-  <div v-if="isAuthenticated" class="userbar relative flex items-center gap-3 text-sm text-white/90">
-    <!-- Avatar -->
+  <div
+    v-if="isAuthenticated"
+    class="userbar relative flex items-center gap-3 text-sm text-white/90"
+  >
+    <!-- Avatar + Name -->
     <button
       @click="open = !open"
       class="flex items-center gap-3 hover:text-white transition select-none"
     >
-      <div
-        class="w-10 h-10 rounded-full bg-[#ff9100] flex items-center justify-center font-bold text-black shadow-md shadow-[#ff9100]/30"
-      >
-        {{ initials }}
+      <!-- ✅ Avatar -->
+      <div class="relative w-10 h-10 rounded-full overflow-hidden border border-white/10 shadow-md shadow-black/40">
+        <img
+          v-if="avatarUrl && !hasError"
+          :src="avatarUrl"
+          @error="hasError = true"
+          alt="Avatar"
+          class="w-full h-full object-cover"
+        />
+        <div
+          v-else
+          class="w-full h-full bg-[#ff9100] flex items-center justify-center font-bold text-black"
+        >
+          {{ initials }}
+        </div>
       </div>
 
-      <!-- Name + Role -->
+      <!-- ✅ Name + Department -->
       <div class="hidden sm:block text-left leading-tight">
-        <div class="font-semibold truncate max-w-[160px]">{{ user?.name || user?.preferred_username }}</div>
+        <div class="font-semibold truncate max-w-[160px]">
+          {{ dbUser?.name || user?.name || user?.preferred_username }}
+        </div>
         <div
           class="inline-block mt-0.5 text-[10px] uppercase tracking-wide bg-[#ff9100]/20 text-[#ff9100] px-2 py-[2px] rounded-md"
         >
@@ -79,17 +98,23 @@ onBeforeUnmount(() => window.removeEventListener("click", onClickOutside))
         v-if="open"
         class="absolute right-0 mt-3 w-56 bg-[#0f121a] border border-white/10 rounded-xl shadow-xl shadow-black/40 z-50 backdrop-blur"
       >
-        <!-- Profil-Header -->
+        <!-- Profil -->
         <div class="px-4 py-3 border-b border-white/10 text-sm flex items-center gap-3">
-          <UserIcon class="w-4 h-4 text-[#ff9100]" />
+          <div class="w-8 h-8 rounded-full overflow-hidden border border-white/10 bg-[#ff9100]/20 flex items-center justify-center">
+            <img
+              v-if="avatarUrl && !hasError"
+              :src="avatarUrl"
+              alt="Avatar"
+              class="w-full h-full object-cover"
+            />
+            <span v-else class="font-semibold text-[#ff9100]">{{ initials }}</span>
+          </div>
+
           <div>
-            <div class="font-semibold text-white truncate">{{ user?.name }}</div>
-            <div class="text-xs text-white/60 truncate">{{ user?.email }}</div>
+            <div class="font-semibold text-white truncate">{{ dbUser?.name || user?.name }}</div>
+            <div class="text-xs text-white/60 truncate">{{ dbUser?.email || user?.email }}</div>
           </div>
         </div>
-
-        <!-- Divider -->
-        <div class="border-t border-white/10"></div>
 
         <!-- Logout -->
         <button

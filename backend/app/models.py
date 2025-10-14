@@ -83,6 +83,7 @@ class Employee(Base):
         "TimeEntry", back_populates="employee",
         cascade="all, delete-orphan", passive_deletes=True
     )
+    avatar_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     def __repr__(self) -> str:
         return f"<Employee {self.id} {self.name!r}>"
