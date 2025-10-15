@@ -1,3 +1,4 @@
+from __future__ import annotations
 from datetime import datetime, date
 from sqlalchemy import Boolean, String, Date, Text, Enum, ForeignKey, DateTime, Index
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
@@ -67,30 +68,57 @@ Index("ix_employees_name_department", Employee.name, Employee.department)
 class Document(Base):
     __tablename__ = "documents"
 
-    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    employee_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)  # KIT-0001
+    # 🆔 Primärschlüssel
+    id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+
+    # 👤 Mitarbeiter-Zuordnung
+    employee_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)  # z. B. KIT-0001
+
+    # 📄 Dokumentinformationen
     document_type: Mapped[Optional[DocumentType]] = mapped_column(
-    Enum(DocumentType, name="documenttype", native_enum=False),
-    nullable=True)
+        Enum(DocumentType, name="documenttype", native_enum=False),
+        nullable=True
+    )
     title: Mapped[str] = mapped_column(String(200), nullable=False)
     file_url: Mapped[Optional[str]] = mapped_column(String)
     is_original_required: Mapped[bool] = mapped_column(default=False, nullable=False)
     status: Mapped[DocumentStatus] = mapped_column(
-    Enum(DocumentStatus, name="documentstatus", native_enum=False),
-    nullable=False,
-    default=DocumentStatus.pending)
+        Enum(DocumentStatus, name="documentstatus", native_enum=False),
+        nullable=False,
+        default=DocumentStatus.pending
+    )
     comment: Mapped[Optional[str]] = mapped_column(String)
     notes: Mapped[Optional[str]] = mapped_column(String)
     upload_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
-    created: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
-    updated: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=datetime.utcnow)
 
-    # 🔗 Beziehung zu Employee (über employee_id, NICHT UUID)
+    # 🕓 Timestamps
+    created: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=datetime.utcnow,
+        nullable=False
+    )
+    updated: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=datetime.utcnow,     # ✅ Fix: initialer Wert bei Insert
+        onupdate=datetime.utcnow,    # ✅ Fix: Auto-Update bei Änderungen
+        nullable=False
+    )
+
+    # 🔗 Beziehungen
     employee: Mapped[Optional["Employee"]] = relationship(
         "Employee",
         primaryjoin="foreign(Document.employee_id) == Employee.employee_id",
-        back_populates="documents",viewonly=True)
-    sick_leave = relationship("SickLeave", back_populates="document", uselist=False)
+        back_populates="documents",
+        viewonly=True
+    )
+
+    sick_leave: Mapped[Optional["SickLeave"]] = relationship(
+        "SickLeave",
+        back_populates="document",
+        uselist=False
+    )
 
 
 # =========================

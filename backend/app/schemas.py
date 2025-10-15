@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, computed_field, Field, ConfigDict
 from datetime import date, datetime, timedelta, timezone
-from typing import Optional
+from typing import Optional,List
 from uuid import UUID
 from enum import Enum
 
@@ -331,6 +331,18 @@ class ReminderOut(BaseModel):
 class ReminderStatusUpdate(BaseModel):
     status: ReminderStatus
 
+class HRDepartment(BaseModel):
+    department: str
+    count: int
 
+class HROverview(BaseModel):
+    employees_total: int
+    departments: List[HRDepartment]
+    open_vacations: int
+    active_sick_leaves: int
+    documents_total: int
+    reminders_pending: int
+    reminders_overdue: int
+    generated_at: str
 
 

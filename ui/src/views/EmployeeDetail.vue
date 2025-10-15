@@ -20,13 +20,7 @@ const employee = ref<any>(null)
 const loading = ref(false)
 const error = ref<string | null>(null)
 
-const activeTab = ref("profile")
-
-const uploading = ref(false)
-const uploadSuccess = ref(false)
-const uploadError = ref<string | null>(null)
-
-// 🔹 Tabs Definition
+// 🔹 Tabs
 const tabs = [
   { key: "profile", label: "Profil" },
   { key: "settings", label: "Einstellungen" },
@@ -36,7 +30,32 @@ const tabs = [
   { key: "documents", label: "Dokumente" },
 ]
 
-// 👇 Avatar Logik mit Fallback
+// 🔹 Aktiver Tab: liest initial aus der URL
+const activeTab = ref(route.query.tab?.toString() || "profile")
+
+// 👉 Wenn sich der Query-Parameter ändert, Tab aktualisieren
+watch(
+  () => route.query.tab,
+  (tab) => {
+    if (tab && typeof tab === "string" && tabs.some(t => t.key === tab)) {
+      activeTab.value = tab
+    }
+  }
+)
+
+// 👉 Beim Tab-Wechsel Query in URL aktualisieren (ohne Reload)
+watch(activeTab, (tab) => {
+  if (tab !== route.query.tab) {
+    router.replace({
+      query: { ...route.query, tab },
+    })
+  }
+})
+
+// 👇 Avatar + Daten
+const uploading = ref(false)
+const uploadSuccess = ref(false)
+const uploadError = ref<string | null>(null)
 const avatarUrl = ref<string>("")
 const hasError = ref(false)
 
@@ -87,10 +106,6 @@ async function load() {
 
 onMounted(load)
 
-function goBack() {
-  router.push({ name: "employees" })
-}
-
 // 👇 Initialen für Fallback
 const initials = computed(() => {
   const name = employee.value?.name || "?"
@@ -108,12 +123,9 @@ const initials = computed(() => {
     <div v-if="loading" class="text-brand-muted">Lade Mitarbeiterdaten…</div>
     <div v-else-if="error" class="text-red-400 whitespace-pre-wrap">{{ error }}</div>
 
-    <!-- Inhalt -->
     <div v-else-if="employee" class="space-y-6">
       <!-- 🔹 Header -->
-      <header
-        class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-4"
-      >
+      <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-4">
         <!-- Avatar + Name -->
         <div class="flex items-center gap-4">
           <EmployeeAvatarUpdate
@@ -139,10 +151,7 @@ const initials = computed(() => {
             <span v-else-if="uploadError" class="text-red-400">{{ uploadError }}</span>
           </div>
 
-          <RouterLink
-            to="/employees"
-            class="text-white/70 hover:text-white transition flex items-center gap-1"
-          >
+          <RouterLink to="/employees" class="text-white/70 hover:text-white transition flex items-center gap-1">
             ← Zurück zur Übersicht
           </RouterLink>
         </div>

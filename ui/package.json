@@ -15,7 +15,8 @@
     "keycloak-js": "^26.2.1",
     "lucide-vue-next": "^0.545.0",
     "vue": "^3.5.18",
-    "vue-chartjs": "^5.3.2"
+    "vue-chartjs": "^5.3.2",
+    "vue3-apexcharts": "^1.9.0"
   },
   "devDependencies": {
     "@types/node": "^24.6.2",

@@ -1,35 +1,49 @@
 import { createRouter, createWebHistory } from "vue-router"
-import Overview from "@/views/Overview.vue"
+
+// 🌍 Views // 👈 Haupt-Dashboard
 import SetupProfile from "@/views/SetupProfile.vue"
+import HRView from "@/views/hr/HRView.vue"
+import Overview from "@/views/Overview.vue"
 
 export default createRouter({
   history: createWebHistory(),
   routes: [
-    // --- Dashboard-Bereich (alt) ---
+    // --- Haupt-Dashboard (für alle Mitarbeiter) ---
     { path: "/", redirect: "/dashboard" },
-    { path: "/dashboard", name: "overview", component: Overview },
+    {
+      path: "/dashboard",
+      name: "overview",
+      component: Overview, // 👈 ersetzt das alte Overview.vue
+      meta: { title: "Dashboard", requiresAuth: true },
+    },
 
-    // --- Setup ---
+    // --- Setup (Profil einrichten) ---
     { path: "/setup", name: "setup", component: SetupProfile },
 
-    // --- Neue Mitarbeiter-Übersicht ---
+    // --- Mitarbeiterverwaltung ---
     {
       path: "/employees",
       name: "employees",
       component: () => import("@/views/Employees.vue"),
+      meta: { title: "Mitarbeiter", requiresAuth: true },
     },
     {
       path: "/employees/:employeeId",
       name: "employee-detail",
       component: () => import("@/views/EmployeeDetail.vue"),
       props: true,
+      meta: { title: "Mitarbeiterprofil", requiresAuth: true },
     },
+
+    // --- Dokumente ---
     {
       path: "/documents",
       name: "documents",
       component: () => import("@/views/Documents.vue"),
       meta: { title: "Dokumente", requiresAuth: true },
     },
+
+    // --- Admin / HR ---
     {
       path: "/admin/audits",
       name: "AdminAudits",
@@ -38,9 +52,14 @@ export default createRouter({
         requiresAuth: true,
         requiresManagement: true,
         title: "Audit Logs",
-      }
+      },
     },
-
+    {
+      path: "/hr",
+      name: "hr",
+      component: HRView,
+      meta: { title: "HR Dashboard", requiresAuth: true },
+    },
 
     // --- Fallback ---
     { path: "/:pathMatch(.*)*", redirect: "/dashboard" },

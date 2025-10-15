@@ -9,7 +9,7 @@ import type {
 
 import axios from "axios"
 import { getToken } from "./keycloak"
-
+import keycloak from "./keycloak"
 // ===== BASE URL dynamisch bestimmen =====
 let BASE = import.meta.env.VITE_API_URL?.trim()
 if (!BASE) {
@@ -33,12 +33,22 @@ export const http = axios.create({
 })
 
 // ===== INTERCEPTOR: fügt automatisch das Keycloak-Token hinzu =====
-http.interceptors.request.use((config) => {
-  const token = getToken()
-  if (token) config.headers.Authorization = `Bearer ${token}`
+http.interceptors.request.use(async (config) => {
+  try {
+    // ⏱️ Token ggf. vor dem Request aktualisieren
+    if (keycloak.authenticated) {
+      await keycloak.updateToken(30).catch(() => {
+        console.warn("⚠️ Token-Refresh fehlgeschlagen → Logout")
+        keycloak.logout()
+      })
+      const token = getToken()
+      if (token) config.headers.Authorization = `Bearer ${token}`
+    }
+  } catch (err) {
+    console.warn("⚠️ Kein gültiger Keycloak-Token gefunden", err)
+  }
   return config
 })
-
 // ===== HELFERFUNKTION =====
 function clean<T extends Record<string, any>>(o: T): Partial<T> {
   return Object.fromEntries(

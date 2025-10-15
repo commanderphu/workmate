@@ -1,69 +1,97 @@
 <script setup lang="ts">
-import { Doughnut } from 'vue-chartjs'
+import { ref, computed, onMounted } from "vue"
+import { Doughnut } from "vue-chartjs"
 import {
   Chart as ChartJS,
-  Tooltip, Legend, ArcElement,
-} from 'chart.js'
+  ArcElement,
+  Tooltip,
+  Legend,
+  type ChartOptions,
+  type ChartData
+} from "chart.js"
 
-ChartJS.register(Tooltip, Legend, ArcElement)
+ChartJS.register(ArcElement, Tooltip, Legend)
 
 type DeptCounts = Record<string, number>
 const props = defineProps<{ data: DeptCounts }>()
-const emit = defineEmits<{ (e: 'slice-click', label: string): void }>()
+const emit = defineEmits<{ (e: "slice-click", label: string): void }>()
 
-const labels = Object.keys(props.data || {})
-const values = Object.values(props.data || {})
+// Reaktive Labels & Werte
+const labels = computed(() => Object.keys(props.data || {}))
+const values = computed(() => Object.values(props.data || {}))
 
-const chartData = {
-  labels,
-  datasets: [{
-    data: values,
-    backgroundColor: [
-      'rgba(255,145,0,0.9)',   // brand accent
-      'rgba(255,255,255,0.7)',
-      'rgba(255,255,255,0.5)',
-      'rgba(255,255,255,0.35)',
-      'rgba(255,255,255,0.25)',
-      'rgba(255,255,255,0.18)',
-    ],
-    borderColor: 'rgba(0,0,0,0)',
-    hoverOffset: 6,
-  }]
-}
+// Chart Data
+const chartData = computed<ChartData<"doughnut">>(() => ({
+  labels: labels.value,
+  datasets: [
+    {
+      data: values.value,
+      backgroundColor: [
+        "#ff9100", // KIT Accent
+        "rgba(255,255,255,0.7)",
+        "rgba(255,255,255,0.5)",
+        "rgba(255,255,255,0.35)",
+        "rgba(255,255,255,0.25)",
+        "rgba(255,255,255,0.18)",
+        "rgba(255,255,255,0.1)",
+      ],
+      borderColor: "transparent",
+      hoverOffset: 8,
+    },
+  ],
+}))
 
-const options = {
+// Optionen
+const chartOptions: ChartOptions<"doughnut"> = {
   responsive: true,
   maintainAspectRatio: false,
+  cutout: "55%",
   plugins: {
     legend: {
-      labels: { color: '#fff', boxWidth: 12, font: { size: 12 } }
+      position: "bottom",
+      labels: {
+        color: "#fff",
+        boxWidth: 12,
+        font: { size: 12, weight: "500" },
+      },
     },
     tooltip: {
-      backgroundColor: 'rgba(34,34,34,0.9)',
-      titleColor: '#fff',
-      bodyColor: '#fff'
-    }
+      backgroundColor: "rgba(34,34,34,0.9)",
+      titleColor: "#fff",
+      bodyColor: "#fff",
+    },
   },
-  cutout: '55%'
-}
-function onClick(_: any, elements: any[]) {
-  if (!elements?.length) return
-  const index = elements[0].index
-  const label = labels[index]
-  emit('slice-click', label)
-}
-const onChartReady = (chart: any) => {
-  chart.options.onClick = onClick
 }
 
+// 🎯 Referenz auf Chart-Instanz
+const chartRef = ref<any>(null)
+
+// 🖱 Klick auf Slice
+function handleClick(event: MouseEvent) {
+  const chart = chartRef.value?.chart
+  if (!chart) return
+  const points = chart.getElementsAtEventForMode(event, "nearest", { intersect: true }, true)
+  if (!points.length) return
+
+  const index = points[0].index
+  const label = chart.data.labels?.[index] as string
+  console.log("🍩 Slice clicked:", label)
+  emit("slice-click", label)
+}
 </script>
 
 <template>
-  <div class="card h-72">
-    <div class="card-title mb-2">Departments (Anteile)</div>
-    <div v-if="labels.length" class="h-[220px]">
-      <Doughnut :data="chartData" :options="options" @chart:rendered="onChartReady" />
+  <div
+    class="rounded-xl bg-[#1a1d26] border border-white/10 p-5 text-white shadow-md shadow-black/30"
+  >
+    <h3 class="text-lg font-semibold mb-4 text-white/90">Departments Overview</h3>
+
+    <div v-if="labels.length" class="h-[260px]" @click="handleClick">
+      <Doughnut ref="chartRef" :data="chartData" :options="chartOptions" />
     </div>
-    <div v-else class="muted">Keine Department-Daten.</div>
+
+    <div v-else class="text-white/50 text-sm text-center py-10">
+      Keine Department-Daten verfügbar.
+    </div>
   </div>
 </template>
