@@ -17,16 +17,16 @@ async function loadData() {
   try {
     const { data } = await apiFetch.get("/hr/overview", { withCredentials: true })
     kpis.value = [
-      { label: "Employees", value: data.employees_total },
-      { label: "Documents", value: data.documents_total },
-      { label: "Open Vacations", value: data.open_vacations },
-      { label: "Active Sick Leaves", value: data.active_sick_leaves },
+      { label: "Mitarbeiter", value: data.employees_total },
+      { label: "Dokumente", value: data.documents_total },
+      { label: "Offene Urlaube", value: data.open_vacations },
+      { label: "Aktive Krankmeldungen", value: data.active_sick_leaves },
     ]
     departmentsData.value = Object.fromEntries(
       data.departments.map((d: any) => [d.department, d.count])
     )
   } catch (e: any) {
-    error.value = "Error loading HR data."
+    error.value = "Fehler beim Laden der HR-Daten."
     console.error(e)
   } finally {
     loading.value = false
@@ -42,18 +42,27 @@ onMounted(loadData)
 
 <template>
   <div class="hr-dashboard">
-    <header class="header">
-      <h1>Human Resources</h1>
-      <p class="subtitle">Überblick über Mitarbeiter, Abteilungen und Dokumente</p>
+    <!-- 🧭 HEADER -->
+    <header class="space-y-1 mb-10 p-6 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 shadow-lg">
+      <h1 class="text-2xl font-semibold text-white tracking-tight flex items-center gap-2">
+        <span class="w-2 h-2 bg-[var(--color-accent)] rounded-full"></span>
+        HR Dashboard
+      </h1>
+      <p class="text-white/60">
+        Überblick über Mitarbeiter, Abteilungen und Dokumente
+      </p>
     </header>
 
-    <div v-if="loading" class="state">📦 Loading data…</div>
+    <!-- 📦 Lade- & Fehlerzustände -->
+    <div v-if="loading" class="state">📦 Lade HR-Daten…</div>
     <div v-else-if="error" class="state error">{{ error }}</div>
 
     <template v-else>
-      <!-- KPIs -->
-      <section class="kpi-section">
-        <div class="kpi-grid">
+      <!-- 📊 KPI-CARDS -->
+      <section>
+        <div
+          class="grid gap-8 mt-10 sm:grid-cols-2 xl:grid-cols-4 grid-cols-[repeat(auto-fit,minmax(260px,1fr))]"
+        >
           <KpiCard
             v-for="k in kpis"
             :key="k.label"
@@ -63,30 +72,41 @@ onMounted(loadData)
         </div>
       </section>
 
-      <!-- Departments -->
-      <section class="dept-section">
+      <!-- 🧩 DEPARTMENTS -->
+      <section class="mt-14 space-y-6">
+        <h2 class="text-lg font-semibold mb-5 text-white flex items-center gap-2 tracking-tight">
+          <span class="w-2 h-2 bg-[var(--color-accent)] rounded-full"></span>
+          Abteilungsübersicht
+        </h2>
+
         <div class="card glass">
-          <h2>Departments Overview</h2>
-          <DonutDepartments
-            :data="departmentsData"
-            @slice-click="onDepartmentSelect"
-          />
+          <DonutDepartments :data="departmentsData" @slice-click="onDepartmentSelect" />
         </div>
 
-        <div v-if="selectedDepartment" class="card glass highlight">
-          <div class="dept-header">
-            <h3>{{ selectedDepartment }}</h3>
-            <button @click="selectedDepartment = null">✕</button>
+        <transition name="fade" mode="out-in">
+          <div
+            v-if="selectedDepartment"
+            key="dept"
+            class="card glass highlight"
+          >
+            <div class="dept-header">
+              <h3>{{ selectedDepartment }}</h3>
+              <button @click="selectedDepartment = null">✕</button>
+            </div>
+            <HRDepartmentEmployees
+              :department="selectedDepartment"
+              @clear="selectedDepartment = null"
+            />
           </div>
-          <HRDepartmentEmployees
-            :department="selectedDepartment"
-            @clear="selectedDepartment = null"
-          />
-        </div>
 
-        <div v-else class="card glass text-center text-white/60 py-10">
-          <span class="text-sm">Select a department to view employees</span>
-        </div>
+          <div
+            v-else
+            key="hint"
+            class="card glass text-center text-white/60 py-10"
+          >
+            <span class="text-sm">Wähle eine Abteilung, um Mitarbeiter anzuzeigen</span>
+          </div>
+        </transition>
       </section>
     </template>
   </div>
@@ -94,21 +114,10 @@ onMounted(loadData)
 
 <style scoped>
 .hr-dashboard {
-  @apply min-h-screen px-8 pb-16 flex flex-col gap-10 pt-0;
+  @apply min-h-screen px-8 pb-28 pt-[calc(72px+2rem)] flex flex-col gap-10;
 }
 
-/* ================= HEADER ================= */
-.header {
-  @apply flex flex-col gap-1;
-}
-.header h1 {
-  @apply text-3xl font-bold text-white tracking-tight;
-}
-.subtitle {
-  @apply text-sm text-white/70;
-}
-
-/* ================= STATE ================= */
+/* Zustand */
 .state {
   @apply text-white/70 text-sm bg-[#1b1d25] border border-white/10 rounded-xl px-6 py-4 text-center;
 }
@@ -116,20 +125,7 @@ onMounted(loadData)
   @apply text-rose-400 border-rose-500/40;
 }
 
-/* ================= KPI SECTION ================= */
-.kpi-section {
-  @apply mt-4;
-}
-.kpi-grid {
-  @apply grid gap-6 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4;
-}
-
-/* ================= DEPARTMENT SECTION ================= */
-.dept-section {
-  @apply flex flex-col gap-6;
-}
-
-/* ================= CARDS ================= */
+/* Karten */
 .card {
   border-radius: 1rem;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -143,12 +139,6 @@ onMounted(loadData)
 .card.glass {
   backdrop-filter: blur(10px);
 }
-.card:hover {
-  background: rgba(27, 29, 37, 0.95);
-  box-shadow:
-    0 8px 28px rgba(0, 0, 0, 0.5),
-    0 0 30px rgba(255, 145, 0, 0.1);
-}
 .card.highlight {
   border-color: rgba(255, 145, 0, 0.3);
   box-shadow:
@@ -156,7 +146,7 @@ onMounted(loadData)
     0 0 30px rgba(255, 145, 0, 0.25);
 }
 
-/* ================= DEPT HEADER ================= */
+/* Dept Header */
 .dept-header {
   @apply flex items-center justify-between mb-4;
 }
