@@ -15,11 +15,24 @@ function formatDate(dateStr?: string) {
         minute: "2-digit",
       })
 }
+
+// 🧩 Farbzuordnung für Aktionen
+function actionColor(action: string) {
+  const a = action?.toLowerCase() || ""
+  if (a.includes("access_denied")) return "text-red-400 font-semibold"
+  if (a.includes("approve")) return "text-green-400"
+  if (a.includes("reject")) return "text-rose-400"
+  if (a.includes("update")) return "text-amber-300"
+  if (a.includes("create")) return "text-cyan-400"
+  if (a.includes("delete")) return "text-rose-400"
+  if (a.includes("login")) return "text-emerald-400"
+  return "text-white/80"
+}
 </script>
 
 <template>
   <div
-    class="w-full rounded-xl border border-white/10 bg-[#1a1d26] p-5 shadow-lg shadow-black/30 overflow-x-auto"
+    class="w-full rounded-xl border border-white/10 bg-[#1a1d26]/90 backdrop-blur-md p-5 shadow-lg shadow-black/30 overflow-x-auto"
   >
     <table class="min-w-full text-sm text-white/80">
       <thead>
@@ -34,30 +47,33 @@ function formatDate(dateStr?: string) {
           <th class="px-3 py-2">📝 Details</th>
         </tr>
       </thead>
+
       <tbody>
         <tr
           v-for="log in logs"
           :key="log.id"
-          class="border-b border-white/5 hover:bg-white/5 transition-colors"
+          :class="[
+            'border-b border-white/5 transition-colors',
+            log.action === 'ACCESS_DENIED'
+              ? 'bg-red-900/20 hover:bg-red-900/30'
+              : 'hover:bg-white/5',
+          ]"
         >
           <td class="px-3 py-2 text-white/50">
             {{ formatDate(log.created_at) }}
           </td>
           <td class="px-3 py-2">{{ log.user_email }}</td>
           <td class="px-3 py-2 text-white/60">{{ log.role }}</td>
-          <td class="px-3 py-2">
-            <span
-              :class="{
-                'text-green-400': log.action === 'approve',
-                'text-red-400': log.action === 'reject',
-                'text-yellow-400': log.action === 'update',
-              }"
-            >
+          <td class="px-3 py-2 font-medium">
+            <span :class="actionColor(log.action)">
               {{ log.action }}
             </span>
           </td>
           <td class="px-3 py-2 text-white/70">{{ log.resource }}</td>
-          <td class="px-3 py-2 text-white/50 truncate max-w-[300px]">
+          <td
+            class="px-3 py-2 text-white/50 truncate max-w-[300px]"
+            :title="log.details"
+          >
             {{ log.details || "–" }}
           </td>
         </tr>
