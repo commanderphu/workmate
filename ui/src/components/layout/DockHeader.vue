@@ -10,6 +10,26 @@ const route = useRoute()
 const { canManage, dbUser } = useAuth()
 const { systems } = useHealth()
 const { isDark, toggleTheme } = useTheme()
+const scrollY = ref(0)
+const blurLevel = ref(6)
+const shadowIntensity = ref(0.6)
+
+onMounted(() => {
+  const handleScroll = () => {
+    scrollY.value = window.scrollY
+    const maxScroll = 200 // nach 200px Scroll maximale „Tiefe“
+
+    // 🌀 Blur verringern leicht beim Scrollen
+    blurLevel.value = Math.max(3, 6 - (scrollY.value / maxScroll) * 3)
+
+    // 🪶 Schatten wird sanfter beim Scrollen
+    shadowIntensity.value = Math.max(0.3, 0.6 - (scrollY.value / maxScroll) * 0.3)
+  }
+
+  window.addEventListener("scroll", handleScroll)
+  handleScroll()
+  onBeforeUnmount(() => window.removeEventListener("scroll", handleScroll))
+})
 
 // 🧩 Rolle bestimmen
 const role = (dbUser.value?.department || "employee").toLowerCase()
@@ -48,14 +68,20 @@ function isActive(item: any) {
 
 <template>
   <header
-    :class="[
-      'dock-header dock-floating fixed top-4 left-1/2 -translate-x-1/2 z-40',
-      'w-[94%] max-w-6xl h-[72px] border border-white/10 rounded-2xl backdrop-blur-md transition-all duration-300',
-      isScrolled
-        ? 'bg-black/30 scale-[0.98] shadow-[0_6px_20px_rgba(0,0,0,0.5),0_0_20px_rgba(255,145,0,0.1)]'
-        : 'bg-black/40 shadow-[0_8px_25px_rgba(0,0,0,0.6),0_0_25px_rgba(255,145,0,0.15)]',
-    ]"
-  >
+  :class="[
+    'dock-header dock-floating fixed top-4 left-1/2 -translate-x-1/2 z-40 w-[94%] max-w-6xl h-[72px] border border-white/10 rounded-2xl transition-all duration-300',
+    route.path.startsWith('/dashboard') || route.path.startsWith('/hr') || route.path.startsWith('/admin')
+      ? 'backdrop-blur-md'
+      : '',
+  ]"
+  :style="{
+    backdropFilter: `blur(${blurLevel}px)`,
+    boxShadow: `0 8px 25px rgba(0,0,0,${shadowIntensity}), 0 0 25px rgba(255,145,0,${shadowIntensity / 3})`,
+    backgroundColor: `rgba(0,0,0,${isScrolled ? 0.35 : 0.4})`,
+    transform: isScrolled ? 'translate(-50%, 0) scale(0.985)' : 'translate(-50%, 0)',
+  }"
+>
+
     <div class="flex items-center justify-between h-full px-6">
       <!-- ░▒▓ BRAND ▓▒░ -->
       <RouterLink to="/" class="flex items-center select-none">
