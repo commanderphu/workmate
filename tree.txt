@@ -5,18 +5,72 @@
 │   │   ├── README
 │   │   ├── script.py.mako
 │   │   └── versions
+│   │       ├── 119d32d1de2f_add_audit_logs_table.py
+│   │       ├── 226bebf822b5_create_documenttype_and_documentstatus_.py
+│   │       ├── 36df3364963c_switch_documents_employee_id_to_string.py
+│   │       ├── 39113ceebce3_add_comment_to_documents.py
+│   │       ├── 538e9cd8a84e_sync_schema_after_varchar_employee_id_.py
+│   │       ├── 57065dc124a9_init_employees_schema.py
+│   │       ├── 5eacbb5b7100_merge_heads_into_one_unified_head.py
+│   │       ├── 7e02891eff18_post_uuid_fix.py
+│   │       ├── 994efb5b6a6d_convert_employee_id_column_to_string_.py
+│   │       ├── 9f515e58cfaf_fix_default_value_for_documents_updated.py
+│   │       ├── aa503c802de3_use_unified_enums_for_documents.py
+│   │       ├── convert_all_employee_ids_to_string.py
+│   │       ├── d01249af0338_merge_orphan_branch_f123456789ab_into_.py
+│   │       ├── dff97d9f27d8_merge_documenttype_branches.py
+│   │       ├── e81ea845b2af_add_documents_sick_leaves_reminders.py
+│   │       └── ee0f1b78c49b_add_avatar_url_to_employees.py
 │   ├── alembic.ini
 │   ├── app
+│   │   ├── alembic
+│   │   ├── alembic.ini
+│   │   ├── backend
+│   │   ├── core
+│   │   │   ├── audit.py
+│   │   │   ├── auth.py
+│   │   │   └── roles.py
 │   │   ├── database.py
+│   │   ├── enums.py
 │   │   ├── __init__.py
 │   │   ├── main.py
 │   │   ├── models.py
 │   │   ├── __pycache__
+│   │   │   ├── database.cpython-313.pyc
+│   │   │   ├── main.cpython-313.pyc
+│   │   │   ├── models.cpython-313.pyc
+│   │   │   └── schemas.cpython-313.pyc
 │   │   ├── routers
+│   │   │   ├── admin.py
+│   │   │   ├── dashboard.py
+│   │   │   ├── documents.py
+│   │   │   ├── employees.py
+│   │   │   ├── health.py
+│   │   │   ├── hr.py
+│   │   │   ├── __init__.py
+│   │   │   ├── meta.py
+│   │   │   ├── __pycache__
+│   │   │   ├── reminders.py
+│   │   │   ├── sick_leaves.py
+│   │   │   ├── time_entries.py
+│   │   │   └── vacation_requests.py
 │   │   ├── schemas.py
+│   │   ├── services
+│   │   │   └── hr_service.py
 │   │   ├── tests
+│   │   │   ├── __pycache__
+│   │   │   └── test_employee_smoke.py
 │   │   ├── uploads
+│   │   │   ├── 40ccaeb0-0633-45f5-b1b4-1361d7bcd88e_Rabattprogramm für Mitarbeiter der ManpowerGroup_2023.pdf
+│   │   │   ├── 4b2ed865-ff17-4d40-b1ea-733f9e19d7a1_Fact Sheet IT Provider_Eric Bawor (1).pdf
+│   │   │   ├── 7abd4163-437e-4770-8f01-838eef50f45c_Fact Sheet IT Provider_Eric Bawor (1).pdf
+│   │   │   ├── avatar
+│   │   │   ├── cfa4012f-6f28-49aa-aa3a-62dd68301cdf_Rabattprogramm für Mitarbeiter der ManpowerGroup_2023.pdf
+│   │   │   └── documents
 │   │   └── utils
+│   │       ├── helpers.py
+│   │       ├── __pycache__
+│   │       └── reminders.py
 │   ├── backend_start.sh
 │   ├── Dockerfile
 │   ├── Dockerfile.dev
@@ -30,15 +84,51 @@
 │   ├── seed_workmate.py
 │   ├── tests
 │   │   └── test_health.py
+│   ├── uploads
+│   │   ├── 40ccaeb0-0633-45f5-b1b4-1361d7bcd88e_Rabattprogramm für Mitarbeiter der ManpowerGroup_2023.pdf
+│   │   ├── 4b2ed865-ff17-4d40-b1ea-733f9e19d7a1_Fact Sheet IT Provider_Eric Bawor (1).pdf
+│   │   ├── 7abd4163-437e-4770-8f01-838eef50f45c_Fact Sheet IT Provider_Eric Bawor (1).pdf
+│   │   ├── avatar
+│   │   ├── cfa4012f-6f28-49aa-aa3a-62dd68301cdf_Rabattprogramm für Mitarbeiter der ManpowerGroup_2023.pdf
+│   │   └── documents
+│   │       └── KIT-0001
 │   └── venv
 │       ├── bin
+│       │   ├── activate
+│       │   ├── activate.csh
+│       │   ├── activate.fish
+│       │   ├── Activate.ps1
+│       │   ├── alembic
+│       │   ├── dotenv
+│       │   ├── email_validator
+│       │   ├── fastapi
+│       │   ├── httpx
+│       │   ├── jose
+│       │   ├── mako-render
+│       │   ├── normalizer
+│       │   ├── pip
+│       │   ├── pip3
+│       │   ├── pip3.13
+│       │   ├── pygmentize
+│       │   ├── py.test
+│       │   ├── pytest
+│       │   ├── python -> /usr/bin/python
+│       │   ├── python3 -> python
+│       │   ├── python3.13 -> python
+│       │   ├── uvicorn
+│       │   └── wheel
 │       ├── include
+│       │   ├── python3.13
+│       │   └── site
 │       ├── lib
+│       │   └── python3.13
 │       ├── lib64 -> lib
 │       └── pyvenv.cfg
 ├── clean_ui.sh
+├── dev-setup-check.sh
 ├── docker-compose.prod.yml
 ├── docker-compose.yml
+├── log_backend_alembic.txt
 ├── Makefile
 ├── notes-gpt.txt
 ├── pg_backup_2025-10-09.sql
@@ -58,35 +148,86 @@
     ├── node_modules
     │   ├── autoprefixer -> .pnpm/autoprefixer@10.4.21_postcss@8.5.6/node_modules/autoprefixer
     │   ├── axios -> .pnpm/axios@1.12.2/node_modules/axios
-    │   ├── chart.js -> .pnpm/chart.js@4.5.0/node_modules/chart.js
+    │   ├── blueimp-md5 -> .pnpm/blueimp-md5@2.19.0/node_modules/blueimp-md5
+    │   ├── chart.js -> .pnpm/chart.js@4.5.1/node_modules/chart.js
     │   ├── @heroicons
+    │   │   └── vue -> ../.pnpm/@heroicons+vue@2.2.0_vue@3.5.22_typescript@5.8.3_/node_modules/@heroicons/vue
+    │   ├── keycloak-js -> .pnpm/keycloak-js@26.2.1/node_modules/keycloak-js
+    │   ├── lucide-vue-next -> .pnpm/lucide-vue-next@0.545.0_vue@3.5.22_typescript@5.8.3_/node_modules/lucide-vue-next
     │   ├── postcss -> .pnpm/postcss@8.5.6/node_modules/postcss
     │   ├── tailwindcss -> .pnpm/tailwindcss@3.4.18/node_modules/tailwindcss
     │   ├── @types
+    │   │   └── node -> ../.pnpm/@types+node@24.7.2/node_modules/@types/node
     │   ├── typescript -> .pnpm/typescript@5.8.3/node_modules/typescript
-    │   ├── vite -> .pnpm/vite@7.1.9_@types+node@24.7.1_jiti@1.21.7/node_modules/vite
+    │   ├── vite -> .pnpm/vite@7.1.9_@types+node@24.7.2_jiti@1.21.7/node_modules/vite
     │   ├── @vitejs
+    │   │   └── plugin-vue -> ../.pnpm/@vitejs+plugin-vue@6.0.1_vite@7.1.9_@types+node@24.7.2_jiti@1.21.7__vue@3.5.22_typescript@5.8.3_/node_modules/@vitejs/plugin-vue
     │   ├── @vue
+    │   │   └── tsconfig -> ../.pnpm/@vue+tsconfig@0.7.0_typescript@5.8.3_vue@3.5.22_typescript@5.8.3_/node_modules/@vue/tsconfig
     │   ├── vue -> .pnpm/vue@3.5.22_typescript@5.8.3/node_modules/vue
-    │   ├── vue-chartjs -> .pnpm/vue-chartjs@5.3.2_chart.js@4.5.0_vue@3.5.22_typescript@5.8.3_/node_modules/vue-chartjs
+    │   ├── vue3-apexcharts -> .pnpm/vue3-apexcharts@1.9.0_apexcharts@5.3.5_vue@3.5.22_typescript@5.8.3_/node_modules/vue3-apexcharts
+    │   ├── vue-chartjs -> .pnpm/vue-chartjs@5.3.2_chart.js@4.5.1_vue@3.5.22_typescript@5.8.3_/node_modules/vue-chartjs
     │   ├── vue-router -> .pnpm/vue-router@4.5.1_vue@3.5.22_typescript@5.8.3_/node_modules/vue-router
     │   └── vue-tsc -> .pnpm/vue-tsc@3.1.1_typescript@5.8.3/node_modules/vue-tsc
     ├── package.json
     ├── pnpm-lock.yaml
     ├── postcss.config.js
     ├── public
-    │   └── vite.svg
+    │   ├── healthz
+    │   ├── silent-check-sso.html
+    │   ├── vite.svg
+    │   ├── workmate_dark_transparent.png
+    │   ├── workmate_favicon.ico
+    │   └── workmate_white_transparent.png
     ├── README.md
     ├── src
     │   ├── App.vue
     │   ├── assets
+    │   │   └── vue.svg
     │   ├── components
+    │   │   ├── AbsenceCalendar.vue
+    │   │   ├── admin
+    │   │   ├── charts
+    │   │   ├── DeptPopover.vue
+    │   │   ├── documents
+    │   │   ├── employee
+    │   │   ├── EmployeeEditForm.vue
+    │   │   ├── HRDashboard.vue
+    │   │   ├── HRDepartmentEmployees.vue
+    │   │   ├── KpiCard.vue
+    │   │   ├── layout
+    │   │   ├── Section.vue
+    │   │   ├── system
+    │   │   ├── TopEmployees.vue
+    │   │   └── UserBar.vue
+    │   ├── composables
+    │   │   ├── useAuth.ts
+    │   │   ├── useHealth.ts
+    │   │   └── useTheme.ts
+    │   ├── enums
+    │   │   └── documentStatus.ts
     │   ├── https-guard.dev.ts
     │   ├── index.css
     │   ├── lib
+    │   │   ├── api.ts
+    │   │   ├── avatar.ts
+    │   │   ├── iconMap.ts
+    │   │   ├── keycloak.ts
+    │   │   └── types.ts
     │   ├── main.ts
     │   ├── router
+    │   │   └── index.ts
+    │   ├── types
+    │   │   └── blueimp-md5.d.ts
     │   ├── views
+    │   │   ├── admin
+    │   │   ├── Documents.vue
+    │   │   ├── EmployeeDetail.vue
+    │   │   ├── Employees.vue
+    │   │   ├── Employee.vue
+    │   │   ├── hr
+    │   │   ├── Overview.vue
+    │   │   └── SetupProfile.vue
     │   └── vite-env.d.ts
     ├── tailwind.config.js
     ├── tsconfig.app.json
@@ -94,4 +235,4 @@
     ├── tsconfig.node.json
     └── vite.config.ts
 
-43 directories, 52 files
+78 directories, 158 files

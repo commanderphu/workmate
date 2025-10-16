@@ -27,6 +27,17 @@ onMounted(async () => {
 })
 
 // ----------------------------
+// 📊 Berechnungen
+// ----------------------------
+const vacationPercent = computed(() => {
+  const used =
+    (data.value?.vacations?.total ?? 0) -
+    (data.value?.vacations?.remaining ?? 0)
+  const total = data.value?.vacations?.total ?? 1
+  return Math.round((used / total) * 100)
+})
+
+// ----------------------------
 // 🔗 Navigation Shortcuts
 // ----------------------------
 function goToProfileTab(tab: string) {
@@ -55,17 +66,26 @@ function goToProfile() {
 
     <template v-else>
       <!-- 🧩 Begrüßung -->
-      <header class="space-y-1 mb-8">
-        <h1 class="text-2xl font-semibold text-white">
+      <header
+        class="space-y-1 mb-10 p-6 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 shadow-lg"
+      >
+        <h1 class="text-2xl font-semibold text-white tracking-tight">
           Willkommen zurück,
-          <span class="text-[var(--color-accent)]">{{ dbUser?.name || dbUser?.preferred_username|| "Benutzer" }}</span> 👋
+          <span class="text-[var(--color-accent)] font-bold">
+            {{ dbUser?.name || dbUser?.preferred_username || "Benutzer" }}
+          </span>
+          👋
         </h1>
-        <p class="text-white/60">Abteilung: {{ dbUser?.department || "–" }}</p>
+        <p class="text-white/60">
+          Abteilung: {{ dbUser?.department || "–" }}
+        </p>
       </header>
 
       <!-- 📊 KPI-Cards -->
       <section>
-        <div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-4 mt-6">
+        <div
+          class="grid gap-8 mt-10 sm:grid-cols-2 xl:grid-cols-4 grid-cols-[repeat(auto-fit,minmax(260px,1fr))]"
+        >
           <KpiCard
             title="Offene Reminders"
             :value="data?.reminders?.pending_total ?? 0"
@@ -86,7 +106,20 @@ function goToProfile() {
             hint="Zu deinen Urlaubsanträgen"
             icon="vacation"
             @click="goToProfileTab('vacation')"
-          />
+          >
+            <!-- 🌿 Vacation Progress -->
+            <template #footer>
+              <div class="mt-3 h-2 w-full bg-white/10 rounded-full overflow-hidden">
+                <div
+                  class="h-full bg-gradient-to-r from-emerald-400 to-cyan-500 transition-all duration-500"
+                  :style="{ width: vacationPercent + '%' }"
+                ></div>
+              </div>
+              <p class="mt-1 text-xs text-white/60 text-right">
+                {{ vacationPercent }} % genutzt
+              </p>
+            </template>
+          </KpiCard>
           <KpiCard
             title="Krankmeldungen"
             :value="data?.sick_leaves?.active ?? 0"
@@ -98,17 +131,36 @@ function goToProfile() {
       </section>
 
       <!-- ⚡ Schnellzugriff -->
-      <section class="mt-12">
-        <h2 class="text-lg font-semibold mb-4 text-white flex items-center gap-2">
+      <section class="mt-14">
+        <h2
+          class="text-lg font-semibold mb-5 text-white flex items-center gap-2 tracking-tight"
+        >
           <span class="w-2 h-2 bg-[var(--color-accent)] rounded-full"></span>
           Schnellzugriff
         </h2>
-        <button
-          class="quick-button"
-          @click="goToProfile"
+
+        <div
+          class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 text-center"
         >
-          Mein Profil öffnen
-        </button>
+          <button
+            class="quick-button"
+            @click="goToProfile"
+          >
+            Mein Profil öffnen
+          </button>
+          <button
+            class="quick-button"
+            @click="goToProfileTab('documents')"
+          >
+            Meine Dokumente
+          </button>
+          <button
+            class="quick-button"
+            @click="goToProfileTab('reminders')"
+          >
+            Meine Reminders
+          </button>
+        </div>
       </section>
     </template>
   </div>
@@ -116,36 +168,23 @@ function goToProfile() {
 
 <style scoped>
 .overview-page {
-  @apply min-h-screen px-8 pb-16;
+  @apply min-h-screen px-8 pb-20;
 }
 
 /* ===== Ladezustände ===== */
-.loading, .error {
+.loading,
+.error {
   @apply text-white/70 text-center mt-10;
 }
-.error { @apply text-rose-400; }
+.error {
+  @apply text-rose-400;
+}
 
-/* ===== Schnellzugriff Button ===== */
+/* ===== Schnellzugriff Buttons ===== */
 .quick-button {
-  @apply bg-[var(--color-accent)] text-black font-semibold px-6 py-3 rounded-lg
-         hover:bg-[var(--color-accent-hover)] transition-all duration-200
-         shadow-[0_0_20px_rgba(255,145,0,0.25)] hover:shadow-[0_0_30px_rgba(255,145,0,0.4)]
-         active:scale-[0.98];
-}
-
-/* ===== KPI Grid allgemeine Layoutverbesserung ===== */
-.grid > * {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 1rem;
-  padding: 1.5rem;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
-  transition: all 0.25s ease;
-}
-.grid > *:hover {
-  transform: translateY(-3px);
-  box-shadow:
-    0 6px 24px rgba(0, 0, 0, 0.5),
-    0 0 25px rgba(255, 145, 0, 0.15);
+  @apply bg-white/5 text-white font-medium px-6 py-3 rounded-lg border border-white/10
+         hover:bg-[var(--color-accent)] hover:text-black transition-all duration-200
+         shadow-[0_0_15px_rgba(255,145,0,0.1)] hover:shadow-[0_0_25px_rgba(255,145,0,0.3)]
+         backdrop-blur-sm;
 }
 </style>
