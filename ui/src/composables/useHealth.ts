@@ -1,6 +1,7 @@
 // src/composables/useHealth.ts
 import { ref, computed, onMounted, onUnmounted } from "vue"
-import axios from "axios"
+import { apiFetch } from "@/lib/api"
+
 
 export type HealthStatus = "ok" | "degraded" | "down" | "loading"
 
@@ -17,9 +18,7 @@ const systems = ref<HealthSystem[]>([])
 let interval: number | null = null
 
 export function useHealth() {
-  /**
-   * Systeme initial registrieren (einmalig)
-   */
+  /** Systeme registrieren */
   function register(initial: Omit<HealthSystem, "status">[]) {
     systems.value = initial.map((sys) => ({
       ...sys,
@@ -30,15 +29,12 @@ export function useHealth() {
     refreshAll()
   }
 
-  /**
-   * Einzelnen Health-Check durchführen
-   */
+  /** Einzelnen Health-Check */
   async function checkSystem(sys: HealthSystem) {
     try {
-      const res = await axios.get(sys.url, { timeout: 4000 })
+      const res = await apiFetch.get(sys.url, { timeout: 4000 })
       const s = (res.data?.status || "").toLowerCase()
-      sys.status =
-        s === "ok" ? "ok" : s === "degraded" ? "degraded" : "down"
+      sys.status = s === "ok" ? "ok" : s === "degraded" ? "degraded" : "down"
       sys.details = res.data?.reason || res.data?.error || "OK"
     } catch (err: any) {
       sys.status = "down"
@@ -47,16 +43,22 @@ export function useHealth() {
     sys.lastCheck = new Date()
   }
 
-  /**
-   * Alle Systeme prüfen
-   */
+  /** Alle Systeme prüfen */
   async function refreshAll() {
     await Promise.all(systems.value.map((s) => checkSystem(s)))
   }
 
-  /**
-   * Gesamtstatus berechnen
-   */
+  /** Farbe zurückgeben */
+  function colorForStatus(s: HealthStatus) {
+    switch (s) {
+      case "ok": return "bg-emerald-400"
+      case "degraded": return "bg-amber-400"
+      case "down": return "bg-rose-500"
+      default: return "bg-gray-400"
+    }
+  }
+
+  /** Gesamtstatus */
   const overallStatus = computed<HealthStatus>(() => {
     if (systems.value.some((s) => s.status === "down")) return "down"
     if (systems.value.some((s) => s.status === "degraded")) return "degraded"
@@ -64,9 +66,7 @@ export function useHealth() {
     return "loading"
   })
 
-  /**
-   * Lifecycle – auto refresh
-   */
+  /** Lifecycle */
   onMounted(() => {
     if (!interval) interval = window.setInterval(refreshAll, 30000)
   })
@@ -75,10 +75,5 @@ export function useHealth() {
     interval = null
   })
 
-  return {
-    systems,
-    overallStatus,
-    register,
-    refreshAll,
-  }
+  return { systems, overallStatus, register, refreshAll, colorForStatus }
 }

@@ -5,10 +5,12 @@ import { useAuth } from "@/composables/useAuth"
 import { useHealth } from "@/composables/useHealth"
 import { useTheme } from "@/composables/useTheme"
 import UserBar from "@/components/UserBar.vue"
+import { API_BASE_URL } from "@/lib/api"
 
 const route = useRoute()
 const { canManage, dbUser } = useAuth()
-const { systems } = useHealth()
+const { systems, register, refreshAll, colorForStatus } = useHealth()
+
 const { isDark, toggleTheme } = useTheme()
 const scrollY = ref(0)
 const blurLevel = ref(6)
@@ -41,6 +43,7 @@ const items = [
   { label: "Audits", to: "/admin/audits", roles: ["management", "admin"] },
 ]
 
+
 // 🧮 Sichtbarkeit prüfen
 function isVisible(item: any) {
   return (
@@ -64,6 +67,34 @@ function isActive(item: any) {
   if (item.to === "/") return route.path === "/"
   return route.path.startsWith(item.to)
 }
+
+
+
+// 🧠 Health-Systeme initial registrieren
+onMounted(() => {
+  register([
+    {
+      key: "api",
+      label: "API",
+      url: `${API_BASE_URL}/api/health`,
+    },
+    {
+      key: "ui",
+      label: "UI",
+      url: `${API_BASE_URL}/api/ui`,
+    },
+    {
+      key: "auth",
+      label: "Auth",
+      url: `${API_BASE_URL}/api/keycloak`,
+    },
+  ])
+
+  // Optional: gleich beim Start aktualisieren
+  refreshAll()
+})
+
+
 </script>
 
 <template>
@@ -112,20 +143,41 @@ function isActive(item: any) {
         </RouterLink>
       </nav>
 
-      <!-- ░▒▓ RECHTS ▓▒░ -->
-      <div class="flex items-center gap-4">
-        <!-- 🌗 Theme Toggle -->
-        <button
-          @click="toggleTheme"
-          class="w-9 h-9 rounded-full border border-white/10 bg-[var(--color-accent)]/10 text-[var(--color-accent)] hover:bg-[var(--color-accent)]/20 hover:scale-105 transition"
-          :title="isDark ? 'Light Mode' : 'Dark Mode'"
-        >
-          <span v-if="isDark">☀️</span>
-          <span v-else>🌙</span>
-        </button>
+        <!-- ░▒▓ RECHTS ▓▒░ -->
+        <div class="flex items-center gap-4">
+          <!-- ✳️ System Health (nur für Management/Admin) -->
+            <div
+              v-if="canManage && systems.length"
+              class="hidden lg:flex items-center gap-3 text-xs text-white/70 mr-2"
+            >
+              <span
+                v-for="s in systems"
+                :key="s.key"
+                class="inline-flex items-center gap-1"
+              >
+                <span
+                  class="inline-block h-2 w-2 rounded-full"
+                  :class="colorForStatus(s.status)"
+                />
+                {{ s.label }}
+              </span>
+            </div>
 
-        <UserBar />
-      </div>
+
+          <!-- 🌗 Theme Toggle -->
+          <button
+            @click="toggleTheme"
+            class="w-9 h-9 rounded-full border border-white/10 bg-[var(--color-accent)]/10 text-[var(--color-accent)] hover:bg-[var(--color-accent)]/20 hover:scale-105 transition"
+            :title="isDark ? 'Light Mode' : 'Dark Mode'"
+          >
+            <span v-if="isDark">☀️</span>
+            <span v-else>🌙</span>
+          </button>
+
+          <!-- 👤 UserBar -->
+          <UserBar />
+        </div>
+
     </div>
   </header>
 </template>

@@ -168,4 +168,5 @@ deleteDocument: (id: string) =>
 }
 
 // Optionaler Export für Low-Level-Zugriffe:
-export { http as apiFetch }
+export { http as apiFetch, BASE as API_BASE_URL }
+
