@@ -34,6 +34,9 @@ origins = [
     # API / Backend
     "https://api.workmate.test",
     "http://api.workmate.test",
+    # Login / KeyCloak
+    "https://login.workmate.test",
+    "http://keycloak:8080/"
 ]
 app.add_middleware(
     CORSMiddleware,

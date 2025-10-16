@@ -9,18 +9,19 @@ const router = useRouter()
 const { dbUser } = useAuth()
 
 // ----------------------------
-// 📦 Dashboard-Daten
+// 📦 Persönliche Dashboard-Daten
 // ----------------------------
 const data = ref<any>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
 
 onMounted(async () => {
+  if (!dbUser.value?.employee_id) return
   try {
-    const res = await api.overview()
+    const res = await api.employee(dbUser.value.employee_id)
     data.value = res
   } catch (err: any) {
-    error.value = err.message ?? "Fehler beim Laden der Übersicht."
+    error.value = err.message ?? "Fehler beim Laden deiner Übersicht."
   } finally {
     loading.value = false
   }
@@ -30,11 +31,12 @@ onMounted(async () => {
 // 📊 Berechnungen
 // ----------------------------
 const vacationPercent = computed(() => {
-  const used =
-    (data.value?.vacations?.total ?? 0) -
-    (data.value?.vacations?.remaining ?? 0)
-  const total = data.value?.vacations?.total ?? 1
-  return Math.round((used / total) * 100)
+  const all = data.value?.vacations?.all_statuses?.length ?? 0
+  const taken = data.value?.vacations?.all_statuses?.filter(
+    (v: string) => v === "taken" || v === "approved"
+  ).length ?? 0
+  if (!all) return 0
+  return Math.round((taken / all) * 100)
 })
 
 // ----------------------------
@@ -59,16 +61,15 @@ function goToProfile() {
 </script>
 
 <template>
-  <div class="overview-page fade-in">
+  <div class="overview-page">
     <!-- 🧠 Ladezustand -->
-    <div v-if="loading" class="loading">Lade Übersicht…</div>
+    <div v-if="loading" class="loading">Lade persönliche Übersicht…</div>
     <div v-else-if="error" class="error">{{ error }}</div>
 
     <template v-else>
       <!-- 🧩 Begrüßung -->
       <header
-        class="space-y-2 mb-10 p-6 rounded-xl bg-gradient-to-r from-white/5 to-white/10
-               backdrop-blur-sm border border-white/10 shadow-[0_0_25px_rgba(0,0,0,0.4)] transition-all duration-300"
+        class="space-y-1 mb-10 p-6 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 shadow-lg"
       >
         <h1 class="text-2xl font-semibold text-white tracking-tight">
           Willkommen zurück,
@@ -84,65 +85,47 @@ function goToProfile() {
 
       <!-- 📊 KPI-Cards -->
       <section>
-        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 mt-8 max-w-6xl mx-auto">
-          <!-- 🕒 Reminders -->
+        <div
+          class="grid gap-8 mt-10 sm:grid-cols-2 xl:grid-cols-4 grid-cols-[repeat(auto-fit,minmax(260px,1fr))]"
+        >
           <KpiCard
             title="Offene Reminders"
-            :value="data?.reminders?.pending_total ?? 0"
-            hint="Zur Aufgabenübersicht"
+            :value="data?.reminders?.open?.length ?? 0"
+            hint="Zu deinen Erinnerungen"
             icon="reminders"
             @click="goToProfileTab('reminders')"
-          >
-            <template #footer>
-              <div class="mt-2 text-xs flex items-center justify-between">
-                <span
-                  class="inline-flex items-center gap-1 text-amber-400"
-                  v-if="data?.reminders?.pending_total > 0"
-                >
-                  ⏳ {{ data?.reminders?.pending_total }} offen
-                </span>
-                <span v-else class="text-emerald-400">✅ Alles erledigt</span>
-              </div>
-            </template>
-          </KpiCard>
-
-          <!-- 📂 Dokumente -->
+          />
           <KpiCard
             title="Dokumente"
             :value="data?.documents?.total ?? 0"
-            hint="Alle Dokumente anzeigen"
+            hint="Alle deine Dokumente anzeigen"
             icon="documents"
             @click="goToProfileTab('documents')"
           />
-
-          <!-- 🌴 Urlaub -->
           <KpiCard
-            title="Urlaubstage"
-            :value="`${data?.vacations?.remaining ?? 0} / ${data?.vacations?.total ?? 0}`"
+            title="Urlaub"
+            :value="data?.vacations?.open_requests ?? 0"
             hint="Zu deinen Urlaubsanträgen"
             icon="vacation"
             @click="goToProfileTab('vacation')"
           >
+            <!-- 🌿 Vacation Progress -->
             <template #footer>
               <div class="mt-3 h-2 w-full bg-white/10 rounded-full overflow-hidden">
                 <div
-                  class="h-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-sky-500
-                         shadow-[0_0_6px_rgba(0,255,200,0.6)]
-                         transition-all duration-500"
+                  class="h-full bg-gradient-to-r from-emerald-400 to-cyan-500 transition-all duration-500"
                   :style="{ width: vacationPercent + '%' }"
                 ></div>
               </div>
-              <p class="mt-1 text-[11px] text-right text-white/60">
-                {{ vacationPercent }} % deiner Urlaubstage genutzt
+              <p class="mt-1 text-xs text-white/60 text-right">
+                {{ vacationPercent }} % abgeschlossen
               </p>
             </template>
           </KpiCard>
-
-          <!-- 💊 Krankmeldungen -->
           <KpiCard
             title="Krankmeldungen"
-            :value="data?.sick_leaves?.active ?? 0"
-            hint="Aktive Krankmeldungen ansehen"
+            :value="data?.sick_leave?.active_now ? 1 : 0"
+            hint="Aktuelle Krankmeldungen ansehen"
             icon="sick"
             @click="goToProfileTab('sick')"
           />
@@ -150,7 +133,7 @@ function goToProfile() {
       </section>
 
       <!-- ⚡ Schnellzugriff -->
-      <section class="mt-14 max-w-5xl mx-auto">
+      <section class="mt-14">
         <h2
           class="text-lg font-semibold mb-5 text-white flex items-center gap-2 tracking-tight"
         >
@@ -158,14 +141,25 @@ function goToProfile() {
           Schnellzugriff
         </h2>
 
-        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 text-center">
-          <button class="quick-button" @click="goToProfile">
+        <div
+          class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 text-center"
+        >
+          <button
+            class="quick-button"
+            @click="goToProfile"
+          >
             Mein Profil öffnen
           </button>
-          <button class="quick-button" @click="goToProfileTab('documents')">
+          <button
+            class="quick-button"
+            @click="goToProfileTab('documents')"
+          >
             Meine Dokumente
           </button>
-          <button class="quick-button" @click="goToProfileTab('reminders')">
+          <button
+            class="quick-button"
+            @click="goToProfileTab('reminders')"
+          >
             Meine Reminders
           </button>
         </div>
@@ -190,26 +184,9 @@ function goToProfile() {
 
 /* ===== Schnellzugriff Buttons ===== */
 .quick-button {
-  @apply bg-white/5 text-white font-medium px-6 py-3 rounded-xl border border-white/10
+  @apply bg-white/5 text-white font-medium px-6 py-3 rounded-lg border border-white/10
          hover:bg-[var(--color-accent)] hover:text-black transition-all duration-200
-         shadow-[0_0_20px_rgba(255,145,0,0.15)]
-         hover:shadow-[0_0_30px_rgba(255,145,0,0.4)]
-         focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-2 focus:ring-offset-black
+         shadow-[0_0_15px_rgba(255,145,0,0.1)] hover:shadow-[0_0_25px_rgba(255,145,0,0.3)]
          backdrop-blur-sm;
-}
-
-/* ===== Animations ===== */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-.fade-in {
-  animation: fadeIn 0.6s ease forwards;
 }
 </style>

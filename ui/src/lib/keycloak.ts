@@ -1,10 +1,19 @@
-// src/lib/keycloak.ts
 import Keycloak from "keycloak-js"
+
 console.log("🧠 Keycloak-Modul geladen")
+
+// 🧩 Monkey-Patch: Deaktiviere Third-Party-Cookie-Test komplett
+;(window as any).Keycloak = Keycloak
+if (Keycloak && (Keycloak as any).prototype) {
+  ;(Keycloak as any).prototype.check3pCookiesSupported = async function () {
+    console.warn("⚙️  3rd-Party-Cookie-Check deaktiviert (Browserkompatibilität)")
+    return Promise.resolve(true)
+  }
+}
 
 // ====== Instanz ======
 const keycloak = new Keycloak({
-  url: "https://login.workmate.test", // kein trailing slash!
+  url: "https://login.workmate.test",
   realm: "kit",
   clientId: "workmate-ui",
 })
@@ -18,11 +27,9 @@ export async function initKeycloak(onAuthenticatedCallback: () => void) {
       pkceMethod: "S256",
       checkLoginIframe: false,
       silentCheckSsoRedirectUri: `${window.location.origin}/silent-check-sso.html`,
-      // 👇 wichtig: leite zur aktuellen Seite zurück, nicht nur Domain
       redirectUri: window.location.href,
     })
 
-    // 🔥 Hash-Parameter nach erfolgreichem Login entfernen
     if (window.location.hash.includes("state=") || window.location.hash.includes("code=")) {
       history.replaceState(null, "", window.location.pathname)
     }
@@ -33,12 +40,13 @@ export async function initKeycloak(onAuthenticatedCallback: () => void) {
       scheduleTokenRefresh()
     } else {
       console.warn("🔒 Nicht authentifiziert – leite zu Login um …")
-      await keycloak.login()
+      await keycloak.login({ redirectUri: window.location.href })
     }
   } catch (err) {
     console.error("❌ Keycloak init error:", err)
   }
 }
+
 
 // ====== Token abrufen ======
 export function getToken(): string | undefined {
@@ -59,6 +67,8 @@ function scheduleTokenRefresh() {
       if (refreshed) console.log("🔄 Token automatisch erneuert")
     } catch (err) {
       console.error("⚠️ Token konnte nicht aktualisiert werden:", err)
+      // Wenn Token abläuft → erneuter Login
+      keycloak.login({ redirectUri: window.location.href })
     }
   }, refreshInterval)
 }
