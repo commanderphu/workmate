@@ -43,6 +43,9 @@ body {
   font-family: "Inter", "JetBrains Mono", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
+main {
+  padding-top: 200px;
+}
 
 /* =======================================================
    🧭  LAYOUT CONTAINER

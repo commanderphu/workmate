@@ -94,7 +94,7 @@ onMounted(loadData)
 
 <style scoped>
 .hr-dashboard {
-  @apply min-h-screen px-8 pb-16 flex flex-col gap-10;
+  @apply min-h-screen px-8 pb-16 flex flex-col gap-10 pt-0;
 }
 
 /* ================= HEADER ================= */

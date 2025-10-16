@@ -19,39 +19,47 @@ const items = [
   { label: "HR",        to: "/hr", roles: ["hr", "backoffice", "management"] },
   { label: "Audits",    to: "/admin/audits", roles: ["management", "admin"] },
 ]
+
+// 🧮 Sichtbarkeit prüfen
+function isVisible(item: any) {
+  return (
+    item.roles.includes("all") ||
+    item.roles.includes(role) ||
+    (canManage && item.roles.includes("management"))
+  )
+}
 </script>
 
 <template>
-  <header class="dock-floating">
-    <div class="container-page flex items-center justify-between h-[72px]">
+  <header
+    class="dock-header dock-floating fixed top-4 left-1/2 -translate-x-1/2 z-40
+           w-[94%] max-w-6xl h-[72px]
+           border border-white/10 rounded-2xl
+           bg-black/40 backdrop-blur-md
+           shadow-[0_8px_25px_rgba(0,0,0,0.6),0_0_25px_rgba(255,145,0,0.15)]
+           transition-all duration-300"
+  >
+    <div class="flex items-center justify-between h-full px-6">
       <!-- ░▒▓ BRAND ▓▒░ -->
-      <RouterLink to="/" class="flex items-center gap-2 select-none">
+      <RouterLink to="/" class="flex items-center select-none">
         <img
           :src="isDark ? '/workmate_dark_transparent.png' : '/workmate_white_transparent.png'"
           alt="Workmate Logo"
-          class="h-9 w-auto drop-shadow-[0_0_10px_rgba(255,145,0,0.6)]"
+          class="h-10 md:h-11 w-auto transition-transform duration-300 hover:scale-[1.05] drop-shadow-[0_0_14px_rgba(255,145,0,0.7)]"
         />
-        <span class="font-semibold tracking-tight text-white/90">
-          <span class="text-[var(--color-accent)]">K.I.T</span> Workmate
-        </span>
       </RouterLink>
 
       <!-- ░▒▓ NAVIGATION ▓▒░ -->
-      <nav class="flex items-center gap-6 text-sm">
+      <nav class="hidden md:flex items-center gap-6 text-[15px] font-medium">
         <RouterLink
-          v-for="i in items.filter(it =>
-              it.roles.includes('all') ||
-              it.roles.includes(role) ||
-              (canManage && it.roles.includes('management'))
-            )"
+          v-for="i in items.filter(isVisible)"
           :key="i.to"
           :to="i.to"
-          :class="[
-            'transition-all duration-200 font-medium',
-            route.path.startsWith(i.to)
-              ? 'text-[var(--color-accent)] font-semibold'
-              : 'text-white/70 hover:text-white'
-          ]"
+          class="relative px-2 py-1 transition-all duration-300"
+          :class="{
+            'text-[var(--color-accent)] font-semibold active-link': route.path.startsWith(i.to),
+            'text-white/70 hover:text-white/90': !route.path.startsWith(i.to),
+          }"
         >
           {{ i.label }}
         </RouterLink>
@@ -69,23 +77,6 @@ const items = [
           <span v-else>🌙</span>
         </button>
 
-        <!-- ✳️ Health nur für Admin/Management -->
-        <div
-          v-if="canManage && systems.length"
-          class="hidden sm:flex items-center gap-3 text-xs text-white/70"
-        >
-          <template v-for="s in systems" :key="s.key">
-            <span class="inline-flex items-center gap-1">
-              <span
-                class="inline-block h-2 w-2 rounded-full"
-                :class="s.status === 'ok' ? 'bg-emerald-400' : 'bg-red-500'"
-              />
-              {{ s.label }}
-            </span>
-          </template>
-        </div>
-
-        <!-- 👤 UserBar -->
         <UserBar />
       </div>
     </div>
@@ -94,41 +85,57 @@ const items = [
 
 <style scoped>
 /* =======================================================
-   🧭 DOCK HEADER — WORKMATE ORIGINAL STYLE
+   🧭 DOCK HEADER — Floating Refined Edition
 ======================================================= */
-header.dock-floating {
-  position: relative;
-  width: 100%;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 1rem;
+.dock-header {
   box-shadow:
-    0 10px 30px rgba(0,0,0,0.6),
-    0 0 20px rgba(255,145,0,0.08);
-  backdrop-filter: blur(6px);
-  transition: box-shadow 0.3s, background 0.3s;
+    0 8px 25px rgba(0, 0, 0, 0.5),
+    0 0 25px rgba(255, 145, 0, 0.1);
+  transition: all 0.3s ease;
 }
-header.dock-floating:hover {
-  background: var(--color-surface-hover);
+.dock-header:hover {
+  background-color: rgba(0, 0, 0, 0.45);
   box-shadow:
-    0 12px 34px rgba(0,0,0,0.68),
-    0 0 28px rgba(255,145,0,0.12);
+    0 12px 32px rgba(0, 0, 0, 0.55),
+    0 0 30px rgba(255, 145, 0, 0.12);
 }
 
-/* 🔹 Links / Hoverfarben */
+/* 🌈 Active Link Styling */
+.active-link::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -4px;
+  transform: translateX(-50%);
+  width: 18px;
+  height: 2px;
+  border-radius: 9999px;
+  background: linear-gradient(to right, var(--color-accent), #ffd180);
+  box-shadow: 0 0 12px rgba(255, 145, 0, 0.4);
+  transition: all 0.4s ease;
+}
+
+/* Hover lift effect */
 nav a {
-  text-decoration: none;
+  position: relative;
+  transition: color 0.25s ease, transform 0.25s ease;
 }
-nav a.active {
-  color: var(--color-accent);
+nav a:hover {
+  transform: translateY(-1px);
 }
 
-/* Logo-Glow */
-header img {
-  filter: drop-shadow(0 0 10px rgba(255,145,0,0.6));
-  transition: filter 0.3s;
+/* Intro Animation */
+.dock-floating {
+  animation: fadeInDock 0.5s ease both;
 }
-header img:hover {
-  filter: drop-shadow(0 0 16px rgba(255,145,0,0.8));
+@keyframes fadeInDock {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
 }
 </style>
