@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { RouterLink, useRoute } from "vue-router"
+import { ref, onMounted, onBeforeUnmount } from "vue"
 import { useAuth } from "@/composables/useAuth"
 import { useHealth } from "@/composables/useHealth"
 import { useTheme } from "@/composables/useTheme"
@@ -15,9 +16,9 @@ const role = (dbUser.value?.department || "employee").toLowerCase()
 
 // 🧭 Navigationseinträge
 const items = [
-  { label: "Dashboard", to: "/", roles: ["all"] },
-  { label: "HR",        to: "/hr", roles: ["hr", "backoffice", "management"] },
-  { label: "Audits",    to: "/admin/audits", roles: ["management", "admin"] },
+  { label: "Dashboard", to: "/dashboard", roles: ["all"] },
+  { label: "HR", to: "/hr", roles: ["hr", "backoffice", "management"] },
+  { label: "Audits", to: "/admin/audits", roles: ["management", "admin"] },
 ]
 
 // 🧮 Sichtbarkeit prüfen
@@ -28,22 +29,42 @@ function isVisible(item: any) {
     (canManage && item.roles.includes("management"))
   )
 }
+
+// 🪄 Scroll-Effekt
+const isScrolled = ref(false)
+onMounted(() => {
+  const onScroll = () => (isScrolled.value = window.scrollY > 10)
+  window.addEventListener("scroll", onScroll)
+  onScroll()
+  onBeforeUnmount(() => window.removeEventListener("scroll", onScroll))
+})
+
+// 🧭 Aktiver Tab (mit Subroute-Check)
+function isActive(item: any) {
+  if (item.to === "/") return route.path === "/"
+  return route.path.startsWith(item.to)
+}
 </script>
 
 <template>
   <header
-    class="dock-header dock-floating fixed top-4 left-1/2 -translate-x-1/2 z-40
-           w-[94%] max-w-6xl h-[72px]
-           border border-white/10 rounded-2xl
-           bg-black/40 backdrop-blur-md
-           shadow-[0_8px_25px_rgba(0,0,0,0.6),0_0_25px_rgba(255,145,0,0.15)]
-           transition-all duration-300"
+    :class="[
+      'dock-header dock-floating fixed top-4 left-1/2 -translate-x-1/2 z-40',
+      'w-[94%] max-w-6xl h-[72px] border border-white/10 rounded-2xl backdrop-blur-md transition-all duration-300',
+      isScrolled
+        ? 'bg-black/30 scale-[0.98] shadow-[0_6px_20px_rgba(0,0,0,0.5),0_0_20px_rgba(255,145,0,0.1)]'
+        : 'bg-black/40 shadow-[0_8px_25px_rgba(0,0,0,0.6),0_0_25px_rgba(255,145,0,0.15)]',
+    ]"
   >
     <div class="flex items-center justify-between h-full px-6">
       <!-- ░▒▓ BRAND ▓▒░ -->
       <RouterLink to="/" class="flex items-center select-none">
         <img
-          :src="isDark ? '/workmate_dark_transparent.png' : '/workmate_white_transparent.png'"
+          :src="
+            isDark
+              ? '/workmate_dark_transparent.png'
+              : '/workmate_white_transparent.png'
+          "
           alt="Workmate Logo"
           class="h-10 md:h-11 w-auto transition-transform duration-300 hover:scale-[1.05] drop-shadow-[0_0_14px_rgba(255,145,0,0.7)]"
         />
@@ -57,8 +78,8 @@ function isVisible(item: any) {
           :to="i.to"
           class="relative px-2 py-1 transition-all duration-300"
           :class="{
-            'text-[var(--color-accent)] font-semibold active-link': route.path.startsWith(i.to),
-            'text-white/70 hover:text-white/90': !route.path.startsWith(i.to),
+            'text-[var(--color-accent)] font-semibold active-link': isActive(i),
+            'text-white/70 hover:text-white/90': !isActive(i),
           }"
         >
           {{ i.label }}
