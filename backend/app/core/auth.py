@@ -1,9 +1,11 @@
 # app/core/auth.py
+from __future__ import annotations
+import json
 import requests
 import jwt
 from jwt import ExpiredSignatureError, InvalidTokenError
 from jwt.algorithms import RSAAlgorithm
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from sqlalchemy import select
@@ -11,16 +13,23 @@ from sqlalchemy import select
 from app.database import get_db
 from app import models
 
+# ============================================================
+# ⚙️ Keycloak / OpenID Konfiguration
+# ============================================================
 KEYCLOAK_INTERNAL = "http://keycloak:8080"
 OIDC_ISSUER = "https://login.workmate.test/realms/kit"
 CLIENT_ID = "workmate-ui"
 JWKS_URI = f"{KEYCLOAK_INTERNAL}/realms/kit/protocol/openid-connect/certs"
 
-auth_scheme = HTTPBearer()
+auth_scheme = HTTPBearer(auto_error=False)
 _JWKS_CACHE = None
 
 
+# ============================================================
+# 🔑 JWKS Key Retrieval (cached)
+# ============================================================
 def get_jwks():
+    """Lädt und cached die öffentlichen JWKS-Schlüssel vom Keycloak-Server."""
     global _JWKS_CACHE
     if _JWKS_CACHE:
         return _JWKS_CACHE
@@ -34,10 +43,39 @@ def get_jwks():
         raise HTTPException(status_code=500, detail=f"Fehler beim Laden der JWKS: {e}")
 
 
-def get_current_user(
+# ============================================================
+# 👤 Benutzer-Authentifizierung (Keycloak + Testmodus)
+# ============================================================
+async def get_current_user(
+    request: Request,
     creds: HTTPAuthorizationCredentials = Depends(auth_scheme),
     db: Session = Depends(get_db),
 ):
+    """
+    Liefert den aktuellen Benutzer basierend auf:
+    - JWT (Keycloak) im Produktivmodus
+    - X-Test-User Header im Testmodus
+    """
+
+    # 🧪 Testmodus: Wenn Middleware einen Test-User gesetzt hat
+    if hasattr(request.state, "test_user") and request.state.test_user:
+        print("🧪 TestAuth aktiv:", request.state.test_user)
+        return request.state.test_user
+
+    # 🧪 Alternativ: Direkter Header (z. B. für pytest)
+    test_user_header = request.headers.get("X-Test-User")
+    if test_user_header:
+        try:
+            test_user = json.loads(test_user_header)
+            print("🧪 TestAuth (Header):", test_user)
+            return test_user
+        except json.JSONDecodeError:
+            raise HTTPException(status_code=400, detail="Ungültiges X-Test-User Format")
+
+    # 🧱 Kein Token vorhanden → nicht authentifiziert
+    if creds is None:
+        raise HTTPException(status_code=401, detail="Missing credentials")
+
     token = creds.credentials
     try:
         header = jwt.get_unverified_header(token)
@@ -62,7 +100,9 @@ def get_current_user(
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Token verification failed: {e}")
 
-    # --- User in DB finden
+    # ============================================================
+    # 🧭 Benutzer in DB finden
+    # ============================================================
     email = decoded.get("email")
     username = decoded.get("preferred_username")
     user = None
@@ -70,20 +110,28 @@ def get_current_user(
     if email:
         user = db.scalar(select(models.Employee).where(models.Employee.email == email))
     if not user and username:
-        user = db.scalar(select(models.Employee).where(
-            (models.Employee.name.ilike(username)) |
-            (models.Employee.employee_id.ilike(f"%{username}%"))
-        ))
+        user = db.scalar(
+            select(models.Employee).where(
+                (models.Employee.name.ilike(username))
+                | (models.Employee.employee_id.ilike(f"%{username}%"))
+            )
+        )
 
     if not user:
         raise HTTPException(status_code=404, detail="Kein Employee für aktuellen Benutzer gefunden")
 
-    # --- Rolle ableiten aus Department
+    # ============================================================
+    # 🧩 Rolle ableiten
+    # ============================================================
     dept = (user.department or "").lower()
     if dept in ("backoffice", "hr"):
-        role = "backoffice"
+        role = "hr"
     elif dept == "management":
         role = "management"
+    elif dept == "support":
+        role = "support"
+    elif dept in ("facility", "security"):
+        role = "admin"
     else:
         role = "employee"
 
@@ -92,19 +140,29 @@ def get_current_user(
         "email": user.email,
         "employee_id": user.employee_id,
         "department": dept,
-        "role": role,  # 🔹 Wichtig: vereinheitlichte Rolle für alle Checks
+        "role": role,
     }
 
     print("✅ Authenticated as:", result)
     return result
 
 
-
-
-def require_roles(*allowed_roles: str):
-    def wrapper(user = Depends(get_current_user)):
+# ============================================================
+# 🧱 Rollen-Schutz für Endpoints
+# ============================================================
+def require_roles(allowed_roles: list[str]):
+    """
+    Decorator, der prüft, ob der aktuelle Benutzer zu den erlaubten Rollen gehört.
+    Beispiel:
+    @require_roles(["management", "hr"])
+    """
+    async def wrapper(user=Depends(get_current_user)):
         role = user.get("role")
         if role not in allowed_roles:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Access denied: Required roles {allowed_roles}, got '{role}'",
+            )
         return user
+
     return wrapper

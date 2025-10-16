@@ -170,7 +170,7 @@ function goToProfile() {
 
 <style scoped>
 .overview-page {
-  @apply min-h-screen px-8 pb-20;
+  @apply min-h-full px-8 pb-20 flex flex-col justify-start;
 }
 
 /* ===== Ladezustände ===== */

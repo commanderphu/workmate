@@ -1,13 +1,19 @@
 name: kit_workmate
 
 networks:
+  # 🔄 Dieses Netzwerk wird vom Identity-Stack bereitgestellt
   kit_net:
+    external: true
+    name: workmate_infra_net
 
 volumes:
   pg_data:
-  ui_node_modules:   # named volume für node_modules im Container
+  ui_node_modules:
 
 services:
+  # ============================================================
+  # 🐘 PostgreSQL
+  # ============================================================
   db:
     image: postgres:16-alpine
     container_name: kit_db
@@ -25,22 +31,31 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+    restart: unless-stopped
     networks:
       - kit_net
 
+  # ============================================================
+  # ⚙️ FastAPI Backend
+  # ============================================================
   backend:
     user: root
     privileged: true
+    networks:
+      - kit_net
     build:
       context: ./backend
       dockerfile: Dockerfile.dev
     container_name: kit_backend
     env_file: ${ENV_FILE:-.env.dev}
     environment:
-      - APP_VERSION=${APP_VERSION:-0.1.0}
-      - GIT_SHA=${GIT_SHA:-dev}
-      - BACKEND_URL=https://api.workmate.test
-      - UPLOAD_DIR=/app/uploads
+      APP_VERSION: ${APP_VERSION:-0.1.0}
+      GIT_SHA: ${GIT_SHA:-dev}
+      BACKEND_URL: https://api.workmate.test
+      UPLOAD_DIR: /app/uploads
+      PYTHONUNBUFFERED: 1
+      PYTHONPATH: /app/backend
+      UVICORN_RELOAD_DELAY: 0.5
     depends_on:
       db:
         condition: service_healthy
@@ -51,12 +66,18 @@ services:
       - ./backend/uploads:/app/uploads
       - ./backend/alembic:/app/backend/alembic
       - ./backend/alembic.ini:/app/backend/alembic.ini
-              # Bind-Mount für Hot-Reload
     command: >
-      sh -c "alembic upgrade head &&
-             uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips="*" --reload --reload-dir /app"
-    networks:
-      - kit_net
+      sh -c "
+        echo '🚀 Starte Workmate Backend...' &&
+        alembic upgrade head &&
+        uvicorn app.main:app
+          --host 0.0.0.0
+          --port 8000
+          --reload
+          --reload-dir /app/backend/app
+          --proxy-headers
+          --forwarded-allow-ips='*'
+      "
     profiles: ["dev"]
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8000/api/ready"]
@@ -65,30 +86,50 @@ services:
       retries: 5
       start_period: 10s
 
+  # ============================================================
+  # 🎨 Vite + Vue Frontend
+  # ============================================================
   ui:
     build:
       context: ./ui
-      dockerfile: Dockerfile.dev     # ← sicherstellen, dass dein UI-Dockerfile.dev corepack/pnpm o. npm enthält
+      dockerfile: Dockerfile.dev
     container_name: kit_ui
+    networks:
+      - kit_net
+
+    env_file: ${ENV_FILE:-.env.dev}
     user: root
     privileged: true
+    tty: true
+    stdin_open: true
+    working_dir: /app
     environment:
-      # Nur den Basis-Pfad ans UI geben, den Proxy macht Vite (target=backend:8000)
-      # File-watcher zuverlässig machen
-      - CHOKIDAR_USEPOLLING=1
+      CHOKIDAR_USEPOLLING: 1
+      NODE_ENV: development
     ports:
       - "${FRONTEND_PORT:-5173}:5173"
     volumes:
-      - ./ui:/app                    # ← gleich wie WORKDIR im UI-Dockerfile
+      - ./ui:/app
       - ui_node_modules:/app/node_modules
-    command: ["pnpm", "dev", "--host", "0.0.0.0", "--port", "5173"]
+    command: >
+      sh -c "
+        echo '🎨 Starte Workmate UI auf http://localhost:5173' &&
+        pnpm dev --host 0.0.0.0 --port 5173
+      "
     depends_on:
       backend:
-        condition: service_healthy   # warte bis API bereit ist
-    networks:
-      - kit_net
+        condition: service_healthy
     profiles: ["dev"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5173"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
+  # ============================================================
+  # 🧭 Adminer (DB UI)
+  # ============================================================
   adminer:
     image: adminer
     container_name: kit_adminer
@@ -97,6 +138,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    restart: unless-stopped
     networks:
       - kit_net
     profiles: ["dev"]

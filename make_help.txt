@@ -1,0 +1,28 @@
+alembic-current:  show current revision
+alembic-history:  show history (verbose)
+be-logs:  Tail backend logs
+be-restart:  Restart backend only
+doctor:  Führt den Workmate Dev Setup Check durch
+down:  Stop stack (keep volumes)
+fe-logs:  Tail frontend logs
+fe-restart:  Restart frontend only
+health:  GET /api/health (via host)
+https-dev:  Restart Caddy, trust CA, run health-check
+https-health:  Check HTTPS endpoints via Caddy proxy
+https-open:  Open UI & API in browser
+live:  GET /api/live
+makemigration:  autogen migration (MIG_MSG="message")
+migrate:  alembic upgrade head
+prod-down:  Stop production stack
+prod-up:  Build & start production stack
+ps:  Show container status
+ready:  GET /api/ready (status code)
+rebuild-be:  Rebuild backend image only
+rebuild-ui:  Rebuild UI image only
+repair:  Vollständige Reparatur (Container, Volumes, Images)
+restart:  Restart backend+ui
+seed:  seed DB (override with SEED_FILE=...)
+sha:  Set GIT_SHA in $(ENV) to current commit
+status:  Zeigt den aktuellen Status aller Workmate-Dienste inkl. API-Health an
+test:  run pytest in backend container
+up:  Start stack (no rebuild)

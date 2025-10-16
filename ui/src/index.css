@@ -42,6 +42,7 @@ body {
   color: var(--color-text);
   font-family: "Inter", "JetBrains Mono", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  overflow: hidden
 }
 main {
   padding-top: 100px;

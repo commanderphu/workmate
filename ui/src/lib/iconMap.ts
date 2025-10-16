@@ -10,7 +10,7 @@ import {
   Briefcase,
   ShieldCheck,
   HeartPulse,
-} from "lucide-vue-next"
+} from 'lucide-vue-next'
 
 /**
  * Einheitliche Icon-Zuordnung für KPI Cards & Dashboard-Module

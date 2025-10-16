@@ -209,3 +209,37 @@ status: ## Zeigt den aktuellen Status aller Workmate-Dienste inkl. API-Health an
 	  echo "  ❌ API nicht erreichbar oder Fehler"; \
 	fi; \
 	echo "──────────────────────────────"
+
+# =========================================
+# 🧹 Code Quality / Linting
+# =========================================
+.PHONY: lint lint-fix lint-ui lint-ui-fix lint-be lint-be-fix
+
+# --- Frontend (ESLint) ---
+lint-ui: ## Lint Frontend (Vue/TS) im Container
+	$(CMD) exec $(FRONTEND_SVC) pnpm exec eslint --ext .js,.ts,.vue src || true
+
+lint-ui-fix: ## Lint + Fix Frontend
+	$(CMD) exec $(FRONTEND_SVC) pnpm exec eslint --ext .js,.ts,.vue src --fix || true
+
+# --- Backend (Ruff) ---
+lint-be: ## Lint Backend (FastAPI)
+	$(CMD) exec $(BACKEND_SVC) ruff check /app || true
+
+lint-be-fix: ## Lint + Fix Backend
+	$(CMD) exec $(BACKEND_SVC) ruff check /app --fix || true
+
+# --- Combined ---
+lint: lint-ui lint-be ## Lint UI + Backend
+lint-fix: lint-ui-fix lint-be-fix ## Lint + Fix alles
+
+# ============================================================
+# 🧹 Reset & Rebuild Database (DEV)
+# ============================================================
+reset-db:
+	@echo "🧨 Lösche Workmate DEV-Datenbank + Container..."
+	docker compose --env-file .env.dev down -v
+	@echo "🗑️  Entferne evtl. verbliebene Volumes..."
+	-docker volume rm kit_workmate_pg_data || true
+	@echo "🧱 Starte Container neu mit frischer DB..."
+	docker compose --env-file .env.dev up --build

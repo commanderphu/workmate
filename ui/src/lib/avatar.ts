@@ -1,5 +1,5 @@
 // src/lib/avatar.ts
-import md5 from "blueimp-md5"
+import md5 from 'blueimp-md5'
 
 /**
  * Gibt die Gravatar-URL für eine gegebene E-Mail zurück.
@@ -14,13 +14,13 @@ export function getGravatarUrl(email?: string, size = 128): string | null {
  * Gibt Initialen basierend auf dem Namen zurück.
  */
 export function getInitials(name?: string): string {
-  if (!name) return "?"
+  if (!name) return '?'
   return name
-    .split(" ")
+    .split(' ')
     .filter(Boolean)
     .slice(0, 2)
     .map((n) => n[0]?.toUpperCase())
-    .join("")
+    .join('')
 }
 
 /**

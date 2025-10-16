@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .database import Base, engine
 from .routers import register_routers
 from .core.auth import get_current_user
-
+from .core.test_auth_middleware import TestAuthMiddleware
 
 # ====== Basis Verzeichnis =====
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -45,6 +45,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(TestAuthMiddleware)
 
 # === Static Files mounten ===
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")

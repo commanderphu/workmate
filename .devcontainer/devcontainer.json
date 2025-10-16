@@ -1,0 +1,77 @@
+{
+  "name": "Workmate Dev",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "dockerComposeFile": [
+    "../docker-compose.yml",
+    "docker-compose.override.yml"
+  ],
+  "service": "backend",
+  "workspaceFolder": "/workspace",
+  "runServices": ["backend", "ui", "db"],
+  "shutdownAction": "stopCompose",
+  "remoteUser": "root",
+  "overrideCommand": false,
+
+  "runArgs": [
+    "--network=host",
+    "--volume", "/var/run/docker.sock:/var/run/docker.sock",
+    "--env", "DISPLAY",
+    "--env", "XDG_RUNTIME_DIR"
+  ],
+
+  "customizations": {
+    "vscode": {
+      "settings": {
+        // === Python / Backend ===
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.analysis.typeCheckingMode": "basic",
+        "python.analysis.autoImportCompletions": true,
+        "python.formatting.provider": "black",
+
+        // === Editor ===
+        "editor.formatOnSave": true,
+        "files.trimTrailingWhitespace": true,
+        "files.insertFinalNewline": true,
+
+        // === ESLint / Frontend ===
+        "eslint.workingDirectories": [
+          { "mode": "auto" },
+          { "directory": "./ui", "changeProcessCWD": true }
+        ],
+        "eslint.validate": ["javascript", "typescript", "vue"],
+        "typescript.tsdk": "ui/node_modules/typescript/lib",
+        "volar.useWorkspaceTsdk": true,
+        "volar.autoSwitchWorkspaceTsdk": true,
+
+        // === Terminal ===
+        "terminal.integrated.defaultProfile.linux": "zsh"
+      },
+      "extensions": [
+        "Vue.volar",
+        "Vue.vscode-typescript-vue-plugin",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "charliermarsh.ruff",
+        "ms-python.python",
+        "ms-python.black-formatter",
+        "ms-azuretools.vscode-docker"
+      ]
+    }
+  },
+
+  "remoteEnv": {
+    "CHOKIDAR_USEPOLLING": "1",
+    "PYTHONUNBUFFERED": "1"
+  },
+
+  // 🧠 Installiere pnpm global, falls noch nicht vorhanden
+  "updateContentCommand": "if ! command -v pnpm >/dev/null 2>&1; then npm install -g pnpm; fi",
+
+  // 🧩 Danach: Backend + UI Setup
+  "postCreateCommand": [
+    "if [ -f backend/requirements.txt ]; then pip install -r backend/requirements.txt; fi",
+    "if [ -d ui ]; then cd ui && pnpm install; fi"
+  ]
+}

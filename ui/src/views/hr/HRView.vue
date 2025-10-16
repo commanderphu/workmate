@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import HRDashboard from "@/components/HRDashboard.vue"
+import HRDashboard from '@/components/HRDashboard.vue'
 </script>
 
 <template>

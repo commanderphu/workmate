@@ -1,0 +1,118 @@
+{
+  "folders": [
+    { "name": "Backend (FastAPI)", "path": "backend" },
+    { "name": "Frontend (Vue UI)", "path": "ui" },
+    { "name": "Root", "path": "." }
+  ],
+
+  "settings": {
+    // === 🌐 Globale Editor Settings ===
+    "workbench.colorTheme": "Catppuccin Frappé",
+    "editor.fontFamily": "JetBrains Mono, Fira Code, monospace",
+    "editor.fontLigatures": true,
+    "editor.formatOnSave": true,
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true,
+    "files.eol": "\n",
+    "files.exclude": {
+      "**/__pycache__": true,
+      "**/.venv": true,
+      "**/node_modules": true,
+      "**/dist": true
+    },
+
+    // === 🎨 Catppuccin Farbanpassung ===
+    "catppuccin.colorOverrides": {
+      "mocha": {
+        "editor.background": "#1e1e2e",
+        "editor.foreground": "#cdd6f4"
+      }
+    },
+
+    // === 🧩 Frontend (Vue 3 + Volar + ESLint + Prettier) ===
+    "typescript.tsdk": "ui/node_modules/typescript/lib",
+    "volar.useWorkspaceTsdk": true,
+    "volar.tsPlugin": true,
+    "volar.autoSwitchWorkspaceTsdk": true,
+    "vetur.ignoreProjectWarning": true,
+    "eslint.validate": ["javascript", "typescript", "vue"],
+    "eslint.format.enable": true,
+    "eslint.workingDirectories": [
+      { "mode": "auto" },
+      { "directory": "./ui", "changeProcessCWD": true }
+    ],
+    "eslint.packageManager": "pnpm",
+    "prettier.requireConfig": true,
+    "prettier.singleQuote": true,
+    "prettier.semi": false,
+    "prettier.trailingComma": "es5",
+    "prettier.printWidth": 100,
+
+    // === 🐍 Backend (Python + FastAPI + Ruff) ===
+    "python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv/bin/python",
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.useLibraryCodeForTypes": true,
+    "python.analysis.exclude": ["ui/**"],
+    "python.linting.ignorePatterns": ["ui/**"],
+    "[python]": {
+      "editor.defaultFormatter": "ms-python.black-formatter"
+    },
+    "ruff.enable": true,
+    "ruff.importStrategy": "fromEnvironment",
+    "ruff.lint.args": ["--fix"],
+
+    // === 🖥️ Terminal ===
+    "terminal.integrated.defaultProfile.linux": "zsh"
+  },
+
+  // === 📦 Empfohlene Erweiterungen ===
+  "extensions": {
+    "recommendations": [
+      "Vue.volar",
+      "dbaeumer.vscode-eslint",
+      "esbenp.prettier-vscode",
+      "charliermarsh.ruff",
+      "ms-python.python",
+      "ms-python.black-formatter",
+      "ms-azuretools.vscode-docker"
+    ]
+  },
+
+  // === 🧠 Makefile-Tasks ===
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "🐳 Start Docker Stack",
+        "type": "shell",
+        "command": "make up",
+        "problemMatcher": []
+      },
+      {
+        "label": "🛑 Stop Docker Stack",
+        "type": "shell",
+        "command": "make down",
+        "problemMatcher": []
+      },
+      {
+        "label": "🔧 Lint (Frontend + Backend)",
+        "type": "shell",
+        "command": "make lint",
+        "problemMatcher": []
+      },
+      {
+        "label": "🧹 Fix Lint (Frontend + Backend)",
+        "type": "shell",
+        "command": "make lint-fix",
+        "problemMatcher": []
+      },
+      {
+        "label": "🧠 Workmate Status",
+        "type": "shell",
+        "command": "make status",
+        "problemMatcher": []
+      }
+    ]
+  }
+}

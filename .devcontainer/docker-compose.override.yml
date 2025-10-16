@@ -1,0 +1,65 @@
+services:
+  backend:
+    # === Code Mounts ===
+    volumes:
+      - ..:/workspace:cached
+      - ../.vscode-server:/root/.vscode-server
+
+    # === Arbeitsverzeichnis + Env ===
+    working_dir: /workspace/backend
+    environment:
+      PYTHONPATH: /workspace/backend
+      CHOKIDAR_USEPOLLING: 1
+      NODE_ENV: development
+      UVICORN_RELOAD_DELAY: 0.5
+
+    # === Netzwerk + Ports ===
+    network_mode: host
+    expose:
+      - "8000"
+
+    # === Startbefehl ===
+    command: >
+      sh -c "
+      echo '🚀 Starte FastAPI Backend auf http://localhost:8000' &&
+      uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+      "
+
+    # === Healthcheck für devcontainer Health Panel ===
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  ui:
+    # === Code Mounts ===
+    volumes:
+      - ..:/workspace:cached
+      - ../.vscode-server:/root/.vscode-server
+
+    working_dir: /workspace/ui
+    environment:
+      CHOKIDAR_USEPOLLING: 1
+      NODE_ENV: development
+
+    # === Netzwerk + Ports ===
+    network_mode: host
+    expose:
+      - "5173"
+
+    # === Startbefehl ===
+    command: >
+      sh -c "
+      echo '🎨 Starte Workmate UI (Vite) auf http://localhost:5173' &&
+      pnpm dev --host 0.0.0.0 --port 5173
+      "
+
+    # === Healthcheck (optional für DockHeader/Statusanzeige) ===
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5173"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
