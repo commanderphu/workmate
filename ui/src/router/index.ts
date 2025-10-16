@@ -61,6 +61,12 @@ export default createRouter({
       meta: { title: "HR Dashboard", requiresAuth: true },
     },
 
+    //-----  Error ------
+    {
+      path: "/403",
+      name: "Forbidden",
+      component: () => import("@/views/error/403.vue"),
+    },
     // --- Fallback ---
     { path: "/:pathMatch(.*)*", redirect: "/dashboard" },
   ],

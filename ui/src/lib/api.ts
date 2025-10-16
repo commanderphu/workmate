@@ -10,6 +10,8 @@ import type {
 import axios from "axios"
 import { getToken } from "./keycloak"
 import keycloak from "./keycloak"
+import router from "@/router"
+
 // ===== BASE URL dynamisch bestimmen =====
 let BASE = import.meta.env.VITE_API_URL?.trim()
 if (!BASE) {
@@ -30,6 +32,7 @@ try {
 export const http = axios.create({
   baseURL: BASE,
   withCredentials: false,
+  headers: { "Content-Type": "application/json" },
 })
 
 // ===== INTERCEPTOR: fügt automatisch das Keycloak-Token hinzu =====
@@ -55,6 +58,32 @@ function clean<T extends Record<string, any>>(o: T): Partial<T> {
     Object.entries(o).filter(([, v]) => v !== undefined && v !== "" && v !== null)
   ) as Partial<T>
 }
+// ============================================================
+// 🧭 Response-Interceptor → zentrales Error-Handling
+// ============================================================h
+  http.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      const status = error.response?.status
+
+      if (status === 401) {
+        console.warn("🔒 Unauthorized – redirecting to /login")
+        router.push("/login")
+      }
+
+      if (status === 403) {
+        console.warn("🚫 Access denied – redirecting to /403")
+        router.push("/403")
+      }
+
+      if (status >= 500) {
+        console.error("💥 Server error:", error.response)
+      }
+
+      return Promise.reject(error)
+    }
+  )
+
 
 // ===== TYPES =====
 export type EmployeeDto = {
